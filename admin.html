@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="sw" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BYAO Mobile Solutions - Master Admin Hub V2</title>
+    <meta name="description" content="BYAO Mobile Solutions Master Admin Dashboard for managing users, technicians, merchants, ads, funding, messages and system security.">
+    <meta name="theme-color" content="#050b18">
+
+    <!-- SUPABASE CONNECTION & SCRIPTS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: "#050b18",
+                        bgDeep: "#081026",
+                        cardBg: "#0f172a",
+                        primary: "#0066ff",
+                        accent: "#00e5ff",
+                        danger: "#ff3344",
+                        success: "#10b981"
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- BYAO CORE JAVASCRIPT -->
+    <script src="js/language.js"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/profile.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/admin.js"></script>
+
+    <!-- GLOBAL CSS -->
+    <style>
+        * {
+            font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            background: #050b18;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .glass-card {
+            background: rgba(15, 23, 42, .85);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(0, 229, 255, .2);
+            transition: .3s;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(0, 229, 255, .5);
+            box-shadow: 0 0 25px rgba(0, 229, 255, .15);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #050b18;
+        }
+
+        button, a {
+            transition: .25s ease;
+        }
+
+        /* --- MPANGLO SAHIHI WA KADI (KUTUNZA STATUS, VIDEO KUBWA, NA VITUFE VILIVYOPANGIKA) --- */
+
+        /* Kuondoa vichwa vya meza vya zamani vinavyobana */
+        .technician-header, .ads-header, tr th, thead {
+            display: none !important;
+        }
+
+        /* Orodha inajipanga kwa safu wima */
+        .technicians-list, .ads-list, .table-container, tbody {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 16px !important;
+            width: 100% !important;
+        }
+
+        /* Kadi inajaa kwa upana wote na kuacha nafasi ya kutosha */
+        .glass-card, tr, td, div[class*="card"], div[class*="item"], div[class*="row"] {
+            display: flex !important;
+            flex-direction: column !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            float: none !important;
+            clear: both !important;
+            padding: 16px !important;
+            margin-bottom: 0 !important;
+            border-radius: 12px !important;
+        }
+
+        /* VIDEO AU PICHA INAKUWA KUBWA NA KUONEKANA YOTE BILA KUBANWA */
+        video, img, .video-container, .card-image, .profile-img {
+            width: 100% !important;
+            height: auto !important;
+            max-height: 400px !important; /* Eneo la video limeongezwa liwe kubwa na kuonekana vizuri */
+            object-fit: contain !important; /* Inahakikisha video haikatwi bali inaonekana yote */
+            background: #000;
+            border-radius: 8px !important;
+            margin-bottom: 14px !important;
+        }
+
+        /* MAELEZO NA STATUS ZINASHUKA CHINI YA VIDEO KWA USAFI */
+        .card-details, .merchant-info, div[class*="info"], div[class*="details"], td {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 8px !important;
+            width: 100% !important;
+            background: transparent !important;
+            border: none !important;
+            padding: 0 !important;
+            margin-bottom: 14px !important;
+        }
+
+        /* KURUDISHA NA KUPANGA STATUS ILI ZIONEKANE WAZI */
+        .status, [class*="status"], span[class*="badge"] {
+            display: inline-block !important;
+            width: fit-content !important;
+            padding: 4px 10px !important;
+            border-radius: 6px !important;
+            font-size: 13px !important;
+        }
+
+        /* VITUFE VINAPANGIKA VIZURI KWA USAFA CHINI KABISA */
+        .card-actions, .status-actions-container, div[class*="action"], div[class*="btn"] {
+            display: flex !important;
+            flex-direction: row !important; /* Vitufe vinajipanga kwa mlalo (row) */
+            flex-wrap: wrap !important;
+            gap: 10px !important;
+            width: 100% !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+            padding-top: 12px !important;
+            margin-top: auto !important;
+        }
+    </style>
+
+</head>
+
+<body class="flex h-screen overflow-hidden bg-darkBg text-white">
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-bgDeep border-r border-slate-800 transition-transform -translate-x-full md:translate-x-0 md:static flex flex-col justify-between">
+        <div>
+            <!-- LOGO AREA -->
+            <div class="h-16 flex items-center justify-between px-6 border-b border-slate-800">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center font-bold text-white shadow-lg shadow-primary/30">
+                        B
+                    </div>
+                    <span class="font-bold text-sm tracking-wider text-white">BYAO <span class="text-accent">ADMIN</span></span>
+                </div>
+                <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- NAVIGATION LINKS -->
+            <nav class="p-4 space-y-1 overflow-y-auto max-h-[calc(100vh-8rem)]">
+                <button onclick="switchTab(event, 'dashboard')" class="nav-btn w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-semibold text-accent bg-primary/10 border border-primary/20">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                    <span>Dashboard</span>
+                </button>
+
+                <button onclick="switchTab(event, 'funding')" class="nav-btn w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/50">
+                    <i data-lucide="hand-coins" class="w-4 h-4"></i>
+                    <span>Funding Requests</span>
+                </button>
+
+                <button onclick="switchTab(event, 'ads')" class="nav-btn w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/50">
+                    <i data-lucide="badge-percent" class="w-4 h-4"></i>
+                    <span>Merchant Ads</span>
+                </button>
+
+                <button onclick="switchTab(event, 'products')" class="nav-btn w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/50">
+                    <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                    <span>Products</span>
+                </button>
+
+                <button onclick="switchTab(event, 'technicians')" class="nav-btn w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/50">
+                    <i data-lucide="wrench" class="w-4 h-4"></i>
+                    <span>Technicians</span>
+                </button>
+
+                <button onclick="switchTab(event, 'video-verification')" class="nav-btn w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/50">
+                    <i data-lucide="video" class="w-4 h-4"></i>
+                    <span>Video Verification</span>
+                </button>
+
+                <button onclick="switchTab(event, 'users')" class="nav-btn w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/50">
+                    <i data-lucide="users" class="w-4 h-4"></i>
+                    <span>Users Control</span>
+                </button>
+
+                <button onclick="switchTab(event, 'messages')" class="nav-btn w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/50">
+                    <i data-lucide="message-square" class="w-4 h-4"></i>
+                    <span>Messages</span>
+                </button>
+
+                <button onclick="switchTab(event, 'notifications')" class="nav-btn w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/50">
+                    <i data-lucide="bell" class="w-4 h-4"></i>
+                    <span>Notifications</span>
+                </button>
+
+                <button onclick="switchTab(event, 'reports')" class="nav-btn w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/50">
+                    <i data-lucide="line-chart" class="w-4 h-4"></i>
+                    <span>Reports & Analytics</span>
+                </button>
+
+                <button onclick="switchTab(event, 'security')" class="nav-btn w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/50">
+                    <i data-lucide="shield-check" class="w-4 h-4"></i>
+                    <span>Security</span>
+                </button>
+
+                <button onclick="switchTab(event, 'backup')" class="nav-btn w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/50">
+                    <i data-lucide="database" class="w-4 h-4"></i>
+                    <span>Backup Center</span>
+                </button>
+
+                <button onclick="switchTab(event, 'settings')" class="nav-btn w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/50">
+                    <i data-lucide="settings" class="w-4 h-4"></i>
+                    <span>System Settings</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- PROFILE / LOGOUT -->
+        <div class="p-4 border-t border-slate-800 bg-darkBg/50">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700 text-xs font-bold text-accent">
+                        A
+                    </div>
+                    <div>
+                        <p id="admin-user-name" class="text-xs font-bold text-white leading-none">Admin</p>
+                        <p class="text-[10px] text-slate-400 mt-1">Master Admin</p>
+                    </div>
+                </div>
+                <button onclick="logoutAdmin()" class="text-slate-400 hover:text-rose-400 p-1.5 rounded-lg hover:bg-slate-800">
+                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- OVERLAY FOR MOBILE -->
+    <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-950/80 z-30 hidden md:hidden"></div>
+
+    <!-- MAIN CONTENT AREA -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+        <!-- TOP BAR -->
+        <header class="h-16 bg-bgDeep border-b border-slate-800 px-6 flex items-center justify-between z-10">
+            <div class="flex items-center space-x-4">
+                <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-white">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+                <h2 id="page-title" class="text-sm font-bold tracking-wide text-white uppercase">Dashboard Overview</h2>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Supabase Live
+                </span>
+                <button onclick="triggerSystemBackup()" class="bg-primary hover:bg-blue-600 text-white text-xs px-3 py-1.5 rounded-lg flex items-center space-x-1.5">
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                    <span>Backup</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- CONTENT SCROLLABLE BODY -->
+        <main class="flex-1 overflow-y-auto p-6 space-y-6">
+
+            <!-- TAB MODULES -->
+            <div id="content-container">
+
+                <!-- DASHBOARD TAB -->
+                <section id="tab-dashboard" class="tab-content active space-y-6">
+                    <!-- DASHBOARD STATISTICS GRID -->
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                        <div class="glass-card rounded-2xl p-4 flex items-center justify-between">
+                            <div>
+                                <p class="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Total Users</p>
+                                <h3 id="stat-total-users" class="text-xl font-extrabold text-white mt-1">--</h3>
+                            </div>
+                            <div class="w-10 h-10 rounded-xl bg-blue-950 text-accent flex items-center justify-center">
+                                <i data-lucide="users" class="w-5 h-5"></i>
+                            </div>
+                        </div>
+
+                        <div class="glass-card rounded-2xl p-4 flex items-center justify-between">
+                            <div>
+                                <p class="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Technicians</p>
+                                <h3 id="stat-total-techs" class="text-xl font-extrabold text-white mt-1">--</h3>
+                            </div>
+                            <div class="w-10 h-10 rounded-xl bg-indigo-950 text-indigo-400 flex items-center justify-center">
+                                <i data-lucide="wrench" class="w-5 h-5"></i>
+                            </div>
+                        </div>
+
+                        <div class="glass-card rounded-2xl p-4 flex items-center justify-between">
+                            <div>
+                                <p class="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Pending Ads</p>
+                                <h3 id="stat-pending-ads" class="text-xl font-extrabold text-white mt-1">--</h3>
+                            </div>
+                            <div class="w-10 h-10 rounded-xl bg-emerald-950 text-success flex items-center justify-center">
+                                <i data-lucide="badge-percent" class="w-5 h-5"></i>
+                            </div>
+                        </div>
+
+                        <div class="glass-card rounded-2xl p-4 flex items-center justify-between">
+                            <div>
+                                <p class="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Funding</p>
+                                <h3 id="stat-funding-reqs" class="text-xl font-extrabold text-white mt-1">--</h3>
+                            </div>
+                            <div class="w-10 h-10 rounded-xl bg-amber-950 text-amber-400 flex items-center justify-center">
+                                <i data-lucide="hand-coins" class="w-5 h-5"></i>
+                            </div>
+                        </div>
+
+                        <div class="glass-card rounded-2xl p-4 flex items-center justify-between">
+                            <div>
+                                <p class="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Repairs</p>
+                                <h3 id="stat-active-repairs" class="text-xl font-extrabold text-white mt-1">--</h3>
+                            </div>
+                            <div class="w-10 h-10 rounded-xl bg-purple-950 text-purple-400 flex items-center justify-center">
+                                <i data-lucide="laptop-minimal" class="w-5 h-5"></i>
+                            </div>
+                        </div>
+
+                        <div class="glass-card rounded-2xl p-4 flex items-center justify-between">
+                            <div>
+                                <p class="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Messages</p>
+                                <h3 id="stat-messages-today" class="text-xl font-extrabold text-white mt-1">--</h3>
+                            </div>
+                            <div class="w-10 h-10 rounded-xl bg-sky-950 text-sky-400 flex items-center justify-center">
+                                <i data-lucide="message-square" class="w-5 h-5"></i>
+                            </div>
+                        </div>
+
+                        <div class="glass-card rounded-2xl p-4 flex items-center justify-between col-span-2">
+                            <div>
+                                <p class="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Unread Notifications</p>
+                                <h3 id="stat-unread-notifications" class="text-xl font-extrabold text-accent mt-1">--</h3>
+                            </div>
+                            <div class="w-10 h-10 rounded-xl bg-cyan-950 text-accent flex items-center justify-center">
+                                <i data-lucide="bell" class="w-5 h-5"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DASHBOARD CONTENT PANEL -->
+                    <div class="glass-card rounded-2xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-bold text-white">Karibu kwenye BYAO Master Admin Hub</h3>
+                            <span class="text-[10px] text-accent border border-accent/30 px-2.5 py-1 rounded-full">System Control</span>
+                        </div>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            Hapa ni kituo kikuu cha usimamizi wa BYAO Mobile Solutions. Msimamizi anaweza kuona takwimu za mfumo, kusimamia mafundi, matangazo ya wafanyabiashara, malipo, ujumbe na usalama wa data.
+                        </p>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                            <div class="bg-bgDeep rounded-xl p-4 border border-slate-800">
+                                <p class="text-[10px] text-slate-400 uppercase font-semibold">System Status</p>
+                                <p class="text-success font-bold text-sm mt-2 flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-success"></span> Online
+                                </p>
+                            </div>
+                            <div class="bg-bgDeep rounded-xl p-4 border border-slate-800">
+                                <p class="text-[10px] text-slate-400 uppercase font-semibold">Database</p>
+                                <p class="text-accent font-bold text-sm mt-2">Supabase Connected</p>
+                            </div>
+                            <div class="bg-bgDeep rounded-xl p-4 border border-slate-800">
+                                <p class="text-[10px] text-slate-400 uppercase font-semibold">Security</p>
+                                <p class="text-white font-bold text-sm mt-2">RLS Protected</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- FUNDING TAB -->
+                <section id="tab-funding" class="tab-content space-y-4">
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 glass-card rounded-2xl p-4">
+                        <h3 class="text-sm font-bold text-white">Malipo ya Mwezi ya Mafundi (Funding Requests)</h3>
+                        <input type="text" placeholder="Tafuta ombi..." oninput="searchFunding(this.value)" class="bg-bgDeep border border-slate-800 text-xs rounded-xl px-4 py-2 w-full sm:w-64 focus:outline-none focus:border-primary text-slate-200">
+                    </div>
+                    <div class="overflow-x-auto glass-card rounded-2xl p-4">
+                        <table class="min-w-full text-xs">
+                            <thead class="bg-bgDeep text-slate-400 uppercase text-[10px] tracking-wider">
+                                <tr>
+                                    <th class="px-4 py-3 text-left rounded-l-lg">Transaction ID</th>
+                                    <th class="px-4 py-3 text-left">Fundi</th>
+                                    <th class="px-4 py-3 text-left">Simu</th>
+                                    <th class="px-4 py-3 text-left">Package</th>
+                                    <th class="px-4 py-3 text-left">Status</th>
+                                    <th class="px-4 py-3 text-right rounded-r-lg">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="funding-table-body" class="divide-y divide-slate-800/60">
+                                <tr><td colspan="6" class="px-6 py-12 text-center text-slate-500">Inasubiri data kutoka Supabase...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- ADS TAB -->
+                <section id="tab-ads" class="tab-content space-y-4">
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 glass-card rounded-2xl p-4">
+                        <h3 class="text-sm font-bold text-white">Matangazo ya Wafanyabiashara (Merchant Ads)</h3>
+                        <input id="adsSearch" type="text" placeholder="Tafuta tangazo..." oninput="searchAds(this.value)" class="bg-bgDeep border border-slate-800 text-xs rounded-xl px-4 py-2 w-full sm:w-64 focus:outline-none focus:border-primary text-slate-200">
+                    </div>
+                    <div class="overflow-x-auto glass-card rounded-2xl p-4">
+                        <table class="min-w-full text-xs">
+                            <thead class="bg-bgDeep text-slate-400 uppercase text-[10px] tracking-wider">
+                                <tr>
+                                    <th class="px-4 py-3 text-left rounded-l-lg">Biashara</th>
+                                    <th class="px-4 py-3 text-left">Tangazo</th>
+                                    <th class="px-4 py-3 text-left">Simu</th>
+                                    <th class="px-4 py-3 text-left">Status</th>
+                                    <th class="px-4 py-3 text-right rounded-r-lg">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ads-table-body" class="divide-y divide-slate-800/60">
+                                <tr><td colspan="5" class="px-6 py-12 text-center text-slate-500">Inasubiri data za matangazo kutoka Supabase...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- PRODUCTS TAB -->
+                <section id="tab-products" class="tab-content space-y-4">
+                    <div class="flex items-center justify-between glass-card rounded-2xl p-4">
+                        <h3 class="text-sm font-bold text-white">Usimamizi wa Bidhaa (Merchant Products)</h3>
+                        <span class="text-[10px] text-accent border border-accent/30 px-3 py-1 rounded-full font-semibold">Products Center</span>
+                    </div>
+                    <div class="overflow-x-auto glass-card rounded-2xl p-4">
+                        <table class="min-w-full text-xs">
+                            <thead class="bg-bgDeep text-slate-400 uppercase text-[10px] tracking-wider">
+                                <tr>
+                                    <th class="px-4 py-3 text-left rounded-l-lg">Bidhaa</th>
+                                    <th class="px-4 py-3 text-left">Mfanyabiashara</th>
+                                    <th class="px-4 py-3 text-left">Bei</th>
+                                    <th class="px-4 py-3 text-left">Status</th>
+                                    <th class="px-4 py-3 text-right rounded-r-lg">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="products-table-body" class="divide-y divide-slate-800/60">
+                                <tr><td colspan="5" class="px-6 py-12 text-center text-slate-500">Inasubiri data za bidhaa kutoka Supabase...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- TECHNICIANS TAB -->
+                <section id="tab-technicians" class="tab-content space-y-4">
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 glass-card rounded-2xl p-4">
+                        <h3 class="text-sm font-bold text-white">Usimamizi wa Mafundi (Technician Approval)</h3>
+                        <input type="text" placeholder="Tafuta fundi..." oninput="searchTechnicians(this.value)" class="bg-bgDeep border border-slate-800 text-xs rounded-xl px-4 py-2 w-full sm:w-64 focus:outline-none focus:border-primary text-slate-200">
+                    </div>
+                    <div class="overflow-x-auto glass-card rounded-2xl p-4">
+                        <table class="min-w-full text-xs">
+                            <thead class="bg-bgDeep text-slate-400 uppercase text-[10px] tracking-wider">
+                                <tr>
+                                    <th class="px-4 py-3 text-left rounded-l-lg">Jina</th>
+                                    <th class="px-4 py-3 text-left">Email</th>
+                                    <th class="px-4 py-3 text-left">Specialty</th>
+                                    <th class="px-4 py-3 text-left">Status</th>
+                                    <th class="px-4 py-3 text-right rounded-r-lg">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="technicians-table-body" class="divide-y divide-slate-800/60">
+                                <tr><td colspan="5" class="px-6 py-12 text-center text-slate-500">Inapakia mafundi kutoka Supabase...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- VIDEO VERIFICATION TAB (BADILISHIWA KUWA KADI KUBWA ZA VIDEO NA MAELEZO CHINI YAKE) -->
+                <section id="tab-video-verification" class="tab-content space-y-4">
+                    <div class="flex items-center justify-between glass-card rounded-2xl p-4">
+                        <h3 class="text-sm font-bold text-white">Uhakiki wa Video (Video Verification)</h3>
+                        <span class="text-[10px] text-purple-400 border border-purple-400/30 px-3 py-1 rounded-full font-semibold">Verification Center</span>
+                    </div>
+
+                    <!-- KADI KUBWA ZINAZOJIPANGA KWA GRID (VIDEO JUU, MAELEZO NA VITABU VYA RANGI CHINI) -->
+                    <div id="video-verification-table-body" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Mfano wa Jinsi Kadi za Video Zitakavyoonekana (Data za Supabase zitajaza hapa moja kwa moja) -->
+                        <div class="glass-card rounded-2xl p-4 flex flex-col justify-between space-y-4">
+                            <div class="w-full bg-black rounded-xl overflow-hidden aspect-video border border-slate-800 flex items-center justify-center relative">
+                                <video controls class="w-full h-full object-cover">
+                                    <source src="" type="video/mp4">
+                                    Browser yako haisapport video.
+                                </video>
+                            </div>
+                            <div class="space-y-1.5">
+                                <div class="flex justify-between items-center">
+                                    <h4 class="text-xs font-bold text-white">Owner: Mwamedi</h4>
+                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">Pending</span>
+                                </div>
+                                <p class="text-[11px] text-slate-400">Aina: Fundi Smartphone</p>
+                                <p class="text-[10px] text-slate-500">Tarehe: 24/08/2026</p>
+                            </div>
+                            <div class="flex items-center gap-2 pt-2 border-t border-slate-800">
+                                <button onclick="approveVideo(1)" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-semibold py-2 px-3 rounded-xl shadow-lg shadow-emerald-600/20 transition text-center">Approve</button>
+                                <button onclick="rejectVideo(1)" class="flex-1 bg-amber-600 hover:bg-amber-500 text-white text-[11px] font-semibold py-2 px-3 rounded-xl shadow-lg shadow-amber-600/20 transition text-center">Reject</button>
+                                <button onclick="deleteVideo(1)" class="bg-rose-600/20 hover:bg-rose-600 text-rose-400 hover:text-white text-[11px] font-semibold py-2 px-3 rounded-xl border border-rose-500/30 transition">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- USERS TAB -->
+                <section id="tab-users" class="tab-content space-y-4">
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 glass-card rounded-2xl p-4 flex-wrap">
+                        <h3 class="text-sm font-bold text-white">Usimamizi wa Watumiaji (Users Management)</h3>
+                        <div class="flex items-center space-x-2 w-full sm:w-auto">
+                            <input id="memberSearch" type="text" placeholder="Tafuta member..." oninput="searchMembers(this.value)" class="bg-bgDeep border border-slate-800 text-xs rounded-xl px-4 py-2 focus:outline-none focus:border-primary text-slate-200">
+                            <select onchange="filterMembersByRole(this.value)" class="bg-bgDeep border border-slate-800 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-primary text-slate-200">
+                                <option value="all">Wote</option>
+                                <option value="client">Clients</option>
+                                <option value="technician">Technicians</option>
+                                <option value="merchant">Merchants</option>
+                                <option value="admin">Admins</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto glass-card rounded-2xl p-4">
+                        <table class="min-w-full text-xs">
+                            <thead class="bg-bgDeep text-slate-400 uppercase text-[10px] tracking-wider">
+                                <tr>
+                                    <th class="px-4 py-3 text-left rounded-l-lg">Jina</th>
+                                    <th class="px-4 py-3 text-left">Email</th>
+                                    <th class="px-4 py-3 text-left">Role</th>
+                                    <th class="px-4 py-3 text-left">Status</th>
+                                    <th class="px-4 py-3 text-right rounded-r-lg">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table-body" class="divide-y divide-slate-800/60">
+                                <tr><td colspan="5" class="px-6 py-12 text-center text-slate-500">Inasubiri data za users kutoka Supabase...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- MESSAGES TAB -->
+                <section id="tab-messages" class="tab-content space-y-4">
+                    <div class="flex items-center justify-between glass-card rounded-2xl p-4">
+                        <h3 class="text-sm font-bold text-white">Ujumbe na Support (Messages Center)</h3>
+                        <span class="text-[10px] text-sky-400 border border-sky-400/30 px-3 py-1 rounded-full font-semibold">Communication Hub</span>
+                    </div>
+                    <div class="overflow-x-auto glass-card rounded-2xl p-4">
+                        <table class="min-w-full text-xs">
+                            <thead class="bg-bgDeep text-slate-400 uppercase text-[10px] tracking-wider">
+                                <tr>
+                                    <th class="px-4 py-3 text-left rounded-l-lg">Sender</th>
+                                    <th class="px-4 py-3 text-left">Message</th>
+                                    <th class="px-4 py-3 text-left">Type</th>
+                                    <th class="px-4 py-3 text-left">Date</th>
+                                    <th class="px-4 py-3 text-right rounded-r-lg">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="messages-table-body" class="divide-y divide-slate-800/60">
+                                <tr><td colspan="5" class="px-6 py-12 text-center text-slate-500">Inasubiri messages kutoka Supabase...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- NOTIFICATIONS TAB -->
+                <section id="tab-notifications" class="tab-content space-y-4">
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 glass-card rounded-2xl p-4">
+                        <h3 class="text-sm font-bold text-white">Arifa za Mfumo (Notifications Hub)</h3>
+                        <div class="flex items-center space-x-2 w-full sm:w-auto">
+                            <input type="text" placeholder="Tafuta notification..." oninput="searchNotifications(this.value)" class="bg-bgDeep border border-slate-800 text-xs rounded-xl px-4 py-2 focus:outline-none focus:border-primary text-slate-200">
+                            <button onclick="markAllNotificationsRead()" class="bg-primary hover:bg-blue-600 text-white text-xs font-semibold px-4 py-2 rounded-xl transition whitespace-nowrap shadow-lg shadow-primary/25">
+                                Weka Zote Zimesomwa
+                            </button>
+                        </div>
+                    </div>
+                    <div class="glass-card rounded-2xl p-6">
+                        <div id="notifications-list" class="space-y-3">
+                            <div class="text-center text-slate-500 text-xs py-12">Inasubiri notifications kutoka Supabase...</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- REPORTS TAB -->
+                <section id="tab-reports" class="tab-content space-y-4">
+                    <div class="flex items-center justify-between glass-card rounded-2xl p-4">
+                        <h3 class="text-sm font-bold text-white">Ripoti na Takwimu (Reports & Analytics)</h3>
+                        <span class="text-[10px] text-indigo-400 border border-indigo-400/30 px-3 py-1 rounded-full font-semibold">Analytics Engine</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="glass-card rounded-2xl p-4">
+                            <p class="text-[10px] text-slate-400 uppercase font-semibold">Total Repairs</p>
+                            <h4 id="report-total-repairs" class="text-xl font-extrabold text-white mt-2">--</h4>
+                        </div>
+                        <div class="glass-card rounded-2xl p-4">
+                            <p class="text-[10px] text-slate-400 uppercase font-semibold">Revenue</p>
+                            <h4 id="report-total-revenue" class="text-xl font-extrabold text-emerald-400 mt-2">--</h4>
+                        </div>
+                        <div class="glass-card rounded-2xl p-4">
+                            <p class="text-[10px] text-slate-400 uppercase font-semibold">Active Users</p>
+                            <h4 id="report-active-users" class="text-xl font-extrabold text-accent mt-2">--</h4>
+                        </div>
+                        <div class="glass-card rounded-2xl p-4">
+                            <p class="text-[10px] text-slate-400 uppercase font-semibold">Completed Jobs</p>
+                            <h4 id="report-completed-jobs" class="text-xl font-extrabold text-purple-400 mt-2">--</h4>
+                        </div>
+                    </div>
+                    <div class="glass-card rounded-2xl p-6">
+                        <div class="bg-bgDeep rounded-xl p-4 border border-slate-800">
+                            <canvas id="reports-chart" height="100"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECURITY TAB -->
+                <section id="tab-security" class="tab-content space-y-4">
+                    <div class="flex items-center justify-between glass-card rounded-2xl p-4">
+                        <h3 class="text-sm font-bold text-white">Usalama wa Mfumo (Security Center)</h3>
+                        <span class="text-[10px] text-rose-400 border border-rose-400/30 px-3 py-1 rounded-full font-semibold">Protected Area</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="glass-card rounded-2xl p-4">
+                            <p class="text-[10px] text-slate-400 uppercase font-semibold">Authentication</p>
+                            <h4 id="security-auth-status" class="text-lg font-extrabold text-emerald-400 mt-2">Active</h4>
+                        </div>
+                        <div class="glass-card rounded-2xl p-4">
+                            <p class="text-[10px] text-slate-400 uppercase font-semibold">Row Level Security</p>
+                            <h4 id="security-rls-status" class="text-lg font-extrabold text-accent mt-2">Enabled</h4>
+                        </div>
+                        <div class="glass-card rounded-2xl p-4">
+                            <p class="text-[10px] text-slate-400 uppercase font-semibold">Admin Session</p>
+                            <h4 id="security-session-status" class="text-lg font-extrabold text-purple-400 mt-2">Protected</h4>
+                        </div>
+                    </div>
+                    <div class="glass-card rounded-2xl p-6 space-y-3">
+                        <h4 class="text-xs font-bold text-white">Recent Security Events</h4>
+                        <div id="security-log-list" class="bg-bgDeep rounded-xl border border-slate-800 p-4 text-xs text-slate-400">
+                            Inasubiri security logs kutoka Supabase...
+                        </div>
+                    </div>
+                </section>
+
+                <!-- BACKUP TAB -->
+                <section id="tab-backup" class="tab-content space-y-4">
+                    <div class="flex items-center justify-between glass-card rounded-2xl p-4">
+                        <h3 class="text-sm font-bold text-white">System Backup Center</h3>
+                        <span class="text-[10px] text-blue-400 border border-blue-400/30 px-3 py-1 rounded-full font-semibold">Data Protection</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="glass-card rounded-2xl p-5 flex flex-col justify-between">
+                            <div>
+                                <div class="w-10 h-10 rounded-xl bg-blue-950 text-accent flex items-center justify-center mb-3">
+                                    <i data-lucide="download" class="w-5 h-5"></i>
+                                </div>
+                                <h4 class="text-sm font-bold text-white">Create Backup</h4>
+                                <p class="text-xs text-slate-400 mt-2 mb-4">Hifadhi nakala ya data muhimu ya mfumo.</p>
+                            </div>
+                            <button onclick="triggerSystemBackup()" class="w-full bg-primary hover:bg-blue-600 text-white text-xs font-semibold py-2.5 rounded-xl shadow-lg shadow-primary/25">Start Backup</button>
+                        </div>
+                        <div class="glass-card rounded-2xl p-5">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-950 text-emerald-400 flex items-center justify-center mb-3">
+                                <i data-lucide="database-backup" class="w-5 h-5"></i>
+                            </div>
+                            <h4 class="text-sm font-bold text-white">Database Status</h4>
+                            <p id="backup-db-status" class="text-xs text-emerald-400 mt-3 font-semibold">Supabase Connected</p>
+                        </div>
+                        <div class="glass-card rounded-2xl p-5">
+                            <div class="w-10 h-10 rounded-xl bg-purple-950 text-purple-400 flex items-center justify-center mb-3">
+                                <i data-lucide="history" class="w-5 h-5"></i>
+                            </div>
+                            <h4 class="text-sm font-bold text-white">Backup History</h4>
+                            <p id="backup-last-date" class="text-xs text-slate-400 mt-3">Hakuna backup bado</p>
+                        </div>
+                    </div>
+                    <div class="glass-card rounded-2xl p-6 space-y-3">
+                        <h4 class="text-xs font-bold text-white">Backup Activity</h4>
+                        <div id="backup-log-list" class="bg-bgDeep border border-slate-800 rounded-xl p-4 text-xs text-slate-400">
+                            Inasubiri backup records...
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SETTINGS TAB -->
+                <section id="tab-settings" class="tab-content space-y-4">
+                    <div class="flex items-center justify-between glass-card rounded-2xl p-4">
+                        <h3 class="text-sm font-bold text-white">System Settings</h3>
+                        <span class="text-[10px] text-cyan-400 border border-cyan-400/30 px-3 py-1 rounded-full font-semibold">BYAO Control</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div class="glass-card rounded-2xl p-5">
+                            <h4 class="text-sm font-bold text-white mb-4">Application Information</h4>
+                            <div class="space-y-3 text-xs">
+                                <div class="flex justify-between py-1 border-b border-slate-800/60">
+                                    <span class="text-slate-400">Application</span>
+                                    <span class="text-white font-bold">BYAO Mobile Solutions</span>
+                                </div>
+                                <div class="flex justify-between py-1 border-b border-slate-800/60">
+                                    <span class="text-slate-400">Version</span>
+                                    <span id="app-version" class="text-accent font-bold">V2.0</span>
+                                </div>
+                                <div class="flex justify-between py-1">
+                                    <span class="text-slate-400">Environment</span>
+                                    <span class="text-emerald-400 font-bold">Production</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="glass-card rounded-2xl p-5">
+                            <h4 class="text-sm font-bold text-white mb-4">System Controls</h4>
+                            <div class="space-y-4 text-xs">
+                                <label class="flex items-center justify-between cursor-pointer">
+                                    <span class="text-slate-300">Maintenance Mode</span>
+                                    <input id="maintenance-mode" type="checkbox" class="w-4 h-4 accent-blue-500 rounded">
+                                </label>
+                                <label class="flex items-center justify-between cursor-pointer">
+                                    <span class="text-slate-300">Allow Registration</span>
+                                    <input id="allow-registration" type="checkbox" checked class="w-4 h-4 accent-blue-500 rounded">
+                                </label>
+                                <label class="flex items-center justify-between cursor-pointer">
+                                    <span class="text-slate-300">Enable Notifications</span>
+                                    <input id="enable-notifications" type="checkbox" checked class="w-4 h-4 accent-blue-500 rounded">
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end">
+                        <button onclick="saveSystemSettings()" class="bg-primary hover:bg-blue-600 text-white text-xs font-semibold px-6 py-2.5 rounded-xl transition shadow-lg shadow-primary/25">Save Settings</button>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- JAVASCRIPT FOR SIDEBAR & TABS -->
+    <script>
+        // Tab Switcher Function
+        function switchTab(evt, tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            const targetTab = document.getElementById(`tab-${tabId}`);
+            if (targetTab) {
+                targetTab.classList.add('active');
+            }
+
+            // Update Active Link UI
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-accent', 'bg-primary/10', 'border', 'border-primary/20');
+                btn.classList.add('text-slate-400');
+            });
+
+            if (evt && evt.currentTarget) {
+                evt.currentTarget.classList.remove('text-slate-400');
+                evt.currentTarget.classList.add('text-accent', 'bg-primary/10', 'border', 'border-primary/20');
+            }
+
+            // Update Page Title
+            const titleElement = document.getElementById('page-title');
+            if (titleElement) {
+                titleElement.innerText = tabId.replace('-', ' ') + " Overview";
+            }
+
+            // Close sidebar on mobile
+            if (window.innerWidth < 768) {
+                toggleSidebar();
+            }
+        }
+
+        // Toggle Sidebar for Mobile
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        // Initialize Lucide Icons
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+        });
+    </script>
+</body>
+</html>

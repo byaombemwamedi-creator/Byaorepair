@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="sw" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>BYAO Mobile Solution - Gateway Portal Pro Max</title>
+  
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#030712">
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+
+<!-- Lucide Icons -->
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<!-- Supabase Library Kwanza -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            darkBg: '#030712',
+            accentCyan: '#00e5ff',
+            accentBlue: '#0066ff'
+          },
+          animation: {
+            'move-right-left': 'moveRightLeft 18s ease-in-out infinite alternate',
+            'move-left-right': 'moveLeftRight 22s ease-in-out infinite alternate',
+            'move-top-bottom': 'moveTopBottom 15s ease-in-out infinite alternate',
+            'move-bottom-top': 'moveBottomTop 19s ease-in-out infinite alternate',
+            'pulse-shrink': 'pulseShrink 4s ease-in-out infinite',
+            'explode-glow': 'explodeGlow 5s ease-in-out infinite',
+            'float-diagonal': 'floatDiagonal 20s linear infinite alternate'
+          },
+          keyframes: {
+            moveRightLeft: {
+              '0%': { transform: 'translateX(-30vw) rotate(0deg) scale(0.9)' },
+              '50%': { transform: 'translateX(35vw) rotate(180deg) scale(1.15)' },
+              '100%': { transform: 'translateX(-30vw) rotate(360deg) scale(0.9)' }
+            },
+            moveLeftRight: {
+              '0%': { transform: 'translateX(40vw) rotate(0deg) scale(1.1)' },
+              '50%': { transform: 'translateX(-25vw) rotate(-180deg) scale(0.85)' },
+              '100%': { transform: 'translateX(40vw) rotate(-360deg) scale(1.1)' }
+            },
+            moveTopBottom: {
+              '0%': { transform: 'translateY(-30vh) scale(1)' },
+              '50%': { transform: 'translateY(40vh) scale(1.3)' },
+              '100%': { transform: 'translateY(-30vh) scale(1)' }
+            },
+            moveBottomTop: {
+              '0%': { transform: 'translateY(35vh) scale(0.8)' },
+              '50%': { transform: 'translateY(-35vh) scale(1.2)' },
+              '100%': { transform: 'translateY(35vh) scale(0.8)' }
+            },
+            pulseShrink: {
+              '0%, 100%': { transform: 'scale(1)', opacity: '0.8' },
+              '50%': { transform: 'scale(0.4)', opacity: '0.2' }
+            },
+            explodeGlow: {
+              '0%, 100%': { transform: 'scale(0.8)', filter: 'drop-shadow(0 0 5px rgba(0,229,255,0.2))', opacity: '0.6' },
+              '50%': { transform: 'scale(1.4)', filter: 'drop-shadow(0 0 35px rgba(0,229,255,0.9))', opacity: '1' }
+            },
+            floatDiagonal: {
+              '0%': { transform: 'translate(-20vw, -20vh) rotate(0deg)' },
+              '100%': { transform: 'translate(30vw, 30vh) rotate(360deg)' }
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #030712;
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(0, 102, 255, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(0, 229, 255, 0.15) 0px, transparent 50%);
+    }
+
+    .ultra-card {
+      background: rgba(15, 23, 42, 0.82);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(0, 229, 255, 0.3);
+      box-shadow: 
+        0 0 50px rgba(0, 102, 255, 0.25),
+        inset 0 0 15px rgba(0, 229, 255, 0.15);
+    }
+  </style>
+</head>
+<body class="text-slate-100 min-h-screen flex flex-col items-center justify-between relative overflow-hidden font-sans p-4">
+
+  <!-- ANIMATED VISUAL OBJECTS BACKGROUND -->
+  <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+    <div class="absolute top-12 left-10 animate-move-right-left animate-explode-glow text-[#00e5ff] p-4 bg-blue-950/40 rounded-3xl border border-cyan-500/30">
+      <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14.7 9.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.7-3.7a6 6 0 01-7.9 7.9l-4.2 4.2a2 2 0 01-2.8 0l-1.4-1.4a2 2 0 010-2.8l4.2-4.2a6 6 0 017.9-7.9l-3.7 3.7z"></path></svg>
+    </div>
+    <div class="absolute top-1/3 right-12 animate-move-top-bottom animate-pulse-shrink text-amber-400 p-4 bg-amber-950/30 rounded-3xl border border-amber-500/30">
+      <svg class="w-14 h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"></path></svg>
+    </div>
+    <div class="absolute bottom-16 left-16 animate-move-left-right animate-pulse-shrink text-indigo-400 p-4 bg-indigo-950/40 rounded-3xl border border-indigo-500/30">
+      <svg class="w-14 h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+    </div>
+    <div class="absolute bottom-20 right-20 animate-move-bottom-top animate-explode-glow text-emerald-400 p-4 bg-emerald-950/40 rounded-3xl border border-emerald-500/30">
+      <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+    </div>
+  </div>
+
+  <!-- Header Section -->
+  <header class="w-full max-w-4xl flex items-center justify-between py-2 z-20 relative">
+    <div class="flex items-center gap-2 bg-slate-900/80 px-3 py-1.5 rounded-full border border-slate-800 backdrop-blur-md">
+      <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping"></span>
+      <span class="text-xs font-mono text-cyan-300 font-bold" id="appTitle">BYAO GLOBAL GATEWAY 2026</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <!-- Language Selector UI -->
+      <div class="flex items-center gap-1.5 bg-slate-900/80 px-2 py-1 rounded-full border border-slate-800 backdrop-blur-md">
+        <label class="text-[10px] text-slate-400 font-bold">Lugha:</label>
+        <select id="languageSelector" onchange="badilishaLugha(this.value)" class="bg-slate-950 border border-slate-800 text-cyan-400 text-xs p-1 rounded-lg focus:outline-none">
+          <option value="sw">🇹🇿 Kiswahili</option>
+          <option value="fr">🇫🇷 Français</option>
+          <option value="en">🇬🇧 English</option>
+        </select>
+      </div>
+      <button id="logoutBtn" onclick="forceSystemLogout()" class="hidden bg-slate-900/90 hover:bg-rose-950/80 border border-slate-700 hover:border-rose-500/50 text-slate-300 hover:text-rose-300 px-3.5 py-1.5 rounded-xl text-xs transition flex items-center gap-1.5 shadow-xl backdrop-blur-md">
+        <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+        <span>Toka Mfumoni</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- OFFLINE NOTIFICATION BANNER -->
+  <div id="offline-banner" style="display: none; background: #e11d48; color: #fff; text-align: center; padding: 8px; font-size: 11px; font-weight: bold; position: sticky; top: 0; z-index: 9999; width: 100%; border-radius: 8px; margin-bottom: 8px;">
+      Huna mtandao: Unatazama takwimu za mwisho zilizohifadhiwa (Offline Mode).
+  </div>
+
+  <!-- MAIN CENTERED CARD -->
+  <main class="relative z-20 w-full max-w-md my-auto">
+    
+    <!-- Banner ya Error / Lockout / Offline -->
+    <div id="errorCodeBanner" class="hidden bg-rose-950/95 border border-rose-500/80 text-rose-200 p-4 rounded-2xl mb-4 text-xs flex flex-col sm:flex-row items-center justify-between gap-2 shadow-2xl backdrop-blur-md">
+      <div class="flex items-center gap-2">
+        <i data-lucide="alert-triangle" class="w-5 h-5 text-rose-400 shrink-0"></i>
+        <span id="errorMsgText">Security Alert! Ingiza taarifa sahihi.</span>
+      </div>
+      <button type="button" onclick="contactAdminWhatsApp()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs transition flex items-center gap-1 shrink-0 shadow-lg">
+        <i data-lucide="message-square" class="w-4 h-4"></i>
+        <span>WhatsApp Admin</span>
+      </button>
+    </div>
+
+    <!-- ULTRA CARD -->
+    <div class="ultra-card rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden transition-all duration-500 hover:border-cyan-400/60">
+      
+      <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600 via-cyan-400 to-indigo-600"></div>
+
+      <div class="text-center mb-6">
+        <div class="inline-flex items-center justify-center p-3.5 bg-cyan-500/10 border border-cyan-400/30 rounded-2xl mb-3 text-cyan-300 shadow-inner">
+          <i data-lucide="cpu" class="w-8 h-8 animate-pulse"></i>
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-cyan-300 via-blue-400 to-indigo-200">
+          BYAO Mobile Solution
+        </h1>
+        <p class="text-xs text-slate-400 mt-1.5 font-medium" id="appSubtitle">Lango Kuu la Mfumo & Access Portal</p>
+      </div>
+
+   <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+
+
+<div>
+<label class="block text-xs font-bold text-slate-300 mb-1.5">
+Email
+</label>
+
+<input 
+type="email"
+id="userEmail"
+required
+placeholder="mfano: jina@gmail.com"
+class="w-full bg-slate-950/90 border border-slate-700/80 rounded-xl px-3.5 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 transition">
+</div>
+
+
+
+<div>
+<label class="block text-xs font-bold text-slate-300 mb-1.5">
+Password
+</label>
+
+<input 
+type="password"
+id="userPassword"
+required
+placeholder="********"
+class="w-full bg-slate-950/90 border border-slate-700/80 rounded-xl px-3.5 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 transition">
+</div>
+
+
+
+<button 
+type="submit" 
+id="submitBtn" 
+class="w-full bg-gradient-to-r from-blue-600 via-cyan-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black py-3 rounded-xl text-sm transition shadow-lg shadow-cyan-500/25 flex items-center justify-center gap-2 active:scale-95">
+
+<span id="btnSubmitText">
+Ingia Kwenye Mfumo
+</span>
+
+<i data-lucide="arrow-right" class="w-4 h-4"></i>
+
+</button>
+
+<p class="text-center text-sm text-slate-400 mt-4">
+Huna akaunti?
+<a href="register.html"
+class="text-cyan-400 font-bold">
+Jisajili hapa
+</a>
+</p>
+
+</form>
+  <!-- Footer Info -->
+  <footer class="w-full max-w-4xl text-center py-3 z-20 text-[11px] text-slate-500">
+    © 2026 BYAO Mobile Solution • Visual Gateway System Engine
+  </footer>
+
+
+  <!-- Script ya Logic, Supabase & Router -->
+  <script>
+async function handleLogin(event){
+
+event.preventDefault();
+
+
+const emailInput = document.getElementById("userEmail");
+const passwordInput = document.getElementById("userPassword");
+
+
+if(!emailInput || !passwordInput){
+
+console.error("Email au Password input haipo");
+
+return;
+
+}
+
+
+const email = emailInput.value.trim();
+const password = passwordInput.value.trim();
+
+
+
+const errorBanner =
+document.getElementById("errorCodeBanner");
+
+const errorMsg =
+document.getElementById("errorMsgText");
+
+
+
+try{
+
+
+const {data, error} =
+await supabaseClient.auth.signInWithPassword({
+
+email: email,
+
+password: password
+
+});
+
+
+
+if(error){
+
+console.error(error);
+
+
+if(errorMsg){
+
+errorMsg.innerText =
+"Login imekataa: " + error.message;
+
+}
+
+
+if(errorBanner){
+
+errorBanner.classList.remove("hidden");
+
+}
+
+
+return;
+
+}
+
+
+
+
+const user = data.user;
+
+
+
+if(!user){
+
+throw new Error("User hajapatikana");
+
+}
+
+
+
+
+// Chukua profile yake
+
+const {data:profile, error:profileError}
+=
+await supabaseClient
+
+.from("profiles")
+
+.select("*")
+
+.eq("id", user.id)
+
+.single();
+
+
+
+if(profileError){
+
+console.error(profileError);
+
+throw new Error("Profile haijapatikana");
+
+}
+
+
+
+
+
+// Angalia kama account active
+
+if(profile.is_active === false){
+
+throw new Error(
+"Account hii imefungwa na Admin"
+);
+
+}
+
+
+
+
+// Hifadhi session
+
+saveToCache(
+"byao_user_session",
+profile
+);
+
+
+
+
+// Badilisha UI
+
+document.getElementById("loginForm")
+?.classList.add("hidden");
+
+
+document.getElementById("verificationState")
+?.classList.remove("hidden");
+
+
+
+const welcome =
+document.getElementById("welcomeText");
+
+
+if(welcome){
+
+welcome.innerText =
+"Karibu, " + profile.full_name;
+
+}
+
+
+
+
+// Routing
+
+setTimeout(()=>{
+
+
+switch(profile.role){
+
+
+case "admin":
+
+window.location.href="admin.html";
+
+break;
+
+
+case "fundi":
+
+case "technician":
+
+window.location.href="fundi.html";
+
+break;
+
+
+
+case "mteja":
+
+case "client":
+
+window.location.href="mteja.html";
+
+break;
+
+
+
+case "mfanyabiashara":
+
+window.location.href="mfanyabiashara.html";
+
+break;
+
+
+
+default:
+
+window.location.href="index.html";
+
+
+}
+
+
+
+},2000);
+
+
+
+}
+
+catch(err){
+
+
+console.error(err);
+
+
+if(errorMsg){
+
+errorMsg.innerText =
+err.message;
+
+}
+
+
+if(errorBanner){
+
+errorBanner.classList.remove("hidden");
+
+}
+}
+
+}
+ document.addEventListener("DOMContentLoaded", function(){
+
+const savedLang =
+localStorage.getItem('byao_selected_lang') || 'sw';
+
+
+const langSelector =
+document.getElementById('languageSelector');
+
+
+if(langSelector){
+    langSelector.value = savedLang;
+}
+
+
+if(typeof applyTranslations === "function"){
+    applyTranslations(savedLang);
+}
+
+
+});
+
+</script>
+
+ <script src="js/language.js"></script>
+
+<script src="js/supabase.js"></script>
+
+<script src="js/notifications.js"></script> 
+<script src="js/auth.js"></script> 
+<script src="js/profile.js"></script>
+
+
+</body>
+
+  </html>

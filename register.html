@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="sw" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BYAO Mobile Solution - Register</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+    tailwind.config = {
+        darkMode:'class',
+        theme:{
+            extend:{
+                colors:{
+                    darkBg:'#030712',
+                    accentCyan:'#00e5ff',
+                    accentBlue:'#0066ff'
+                }
+            }
+        }
+    }
+    </script>
+
+    <!-- SUPABASE CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+    body{
+        background:#030712;
+        background-image:
+        radial-gradient(at 0% 0%,rgba(0,102,255,.20),transparent 50%),
+        radial-gradient(at 100% 100%,rgba(0,229,255,.15),transparent 50%);
+    }
+
+    .card{
+        background:rgba(15,23,42,.85);
+        backdrop-filter:blur(20px);
+        border:1px solid rgba(0,229,255,.25);
+    }
+    </style>
+</head>
+
+<body class="min-h-screen flex items-center justify-center text-white p-5">
+
+    <div class="card w-full max-w-md rounded-3xl p-6 shadow-2xl">
+
+        <div class="text-center mb-6">
+            <h1 class="text-3xl font-black bg-gradient-to-r from-cyan-300 to-blue-500 text-transparent bg-clip-text">
+                BYAO MOBILE SOLUTION
+            </h1>
+            <p class="text-slate-400 text-sm mt-2">
+                Create New Account
+            </p>
+        </div>
+
+        <div id="registerMessage" class="hidden mb-4 p-3 rounded-xl text-sm"></div>
+
+        <form id="registerForm" class="space-y-4">
+
+            <div>
+                <label class="text-xs text-slate-300">Jina Kamili</label>
+                <input id="fullName" type="text" required class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-xl p-3" placeholder="Mfano: Byaombe Mwamedi">
+            </div>
+
+            <div>
+                <label class="text-xs text-slate-300">Email</label>
+                <input id="email" type="email" required class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-xl p-3" placeholder="example@gmail.com">
+            </div>
+
+            <div>
+                <label class="text-xs text-slate-300">Password</label>
+                <input id="password" type="password" required class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-xl p-3" placeholder="********">
+            </div>
+
+            <div>
+                <label class="text-xs text-slate-300">Namba ya Simu / WhatsApp</label>
+                <input id="phone" type="text" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-xl p-3" placeholder="+257...">
+            </div>
+
+            <div>
+                <label class="text-xs text-slate-300">Location</label>
+                <input id="location" type="text" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-xl p-3" placeholder="Mji / Nchi">
+            </div>
+
+            <div>
+                <label class="text-xs text-slate-300">Chagua Aina ya Account</label>
+                <select id="role" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-xl p-3">
+                    <option value="client">Mteja</option>
+                    <option value="technician">Fundi</option>
+                    <option value="assistant">Assistant Fundi</option>
+                    <option value="merchant">Mfanyabiashara</option>
+                </select>
+            </div>
+
+            <button type="submit" class="w-full bg-gradient-to-r from-blue-600 via-cyan-500 to-indigo-600 py-3 rounded-xl font-bold">
+                Fungua Account
+            </button>
+
+        </form>
+
+        <div class="text-center mt-5 text-sm text-slate-400">
+            Una account tayari?
+            <a href="index.html" class="text-cyan-400">Ingia hapa</a>
+        </div>
+
+    </div>
+
+    <div id="loadingOverlay" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center">
+        <div class="bg-slate-900 border border-cyan-500/30 rounded-3xl p-6 text-center shadow-2xl">
+            <div class="w-12 h-12 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p id="loadingText" class="text-white font-bold text-sm">
+                Inatengeneza akaunti...
+            </p>
+        </div>
+    </div>
+
+    <!-- Tumesafisha scripts zisizo za lazima hapa ili kuzuia auto-redirect -->
+    <script src="js/language.js"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/register.js"></script>
+
+</body>
+
+</html>

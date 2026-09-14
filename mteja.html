@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="sw" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BYAO Mobile Solution - System Kamili</title>
+    
+    <!-- Tailwind CSS & Lucide Icons CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Supabase JS Client v2 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#050b18',
+                        bgDeep: '#081026',
+                        cardBg: '#0f172a',
+                        primary: '#0066ff',
+                        accent: '#00e5ff',
+                        accentRed: '#ff3344',
+                        warning: '#f59e0b',
+                        textMain: '#f8fafc',
+                        textLight: '#94a3b8',
+                        borderCol: '#1e293b'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        * { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; box-sizing: border-box; }
+        body { background-color: #050b18; color: #f8fafc; }
+        .glass-card {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(0, 229, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        .glass-card:hover {
+            border-color: rgba(0, 229, 255, 0.4);
+            box-shadow: 0 0 25px rgba(0, 229, 255, 0.15);
+        }
+        .chat-box { height: 460px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.8rem; }
+        .msg { max-width: 85%; padding: 0.75rem 1rem; border-radius: 12px; font-size: 0.85rem; word-break: break-word; }
+        .msg.incoming { background: #1e293b; align-self: flex-start; border: 1px solid #334155; color: #f8fafc; }
+        .msg.outgoing { background: #0066ff; color: white; align-self: flex-end; }
+        .preview-container { display: none; background: #0f172a; border: 1px solid #334155; padding: 10px; border-radius: 8px; margin-top: 8px; align-items: center; justify-content: space-between; }
+        .preview-container.active { display: flex; }
+        .scam-warning { background: rgba(245, 158, 11, 0.12); border: 1px solid #f59e0b; color: #f59e0b; padding: 0.85rem; border-radius: 12px; font-size: 0.82rem; margin-bottom: 1rem; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #050b18; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        
+        .recording-pulse {
+            animation: pulse-red 1.2s infinite;
+            background-color: #ff3344 !important;
+            color: white !important;
+        }
+        @keyframes pulse-red {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 51, 68, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(255, 51, 68, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 51, 68, 0); }
+        }
+
+        .shake-live-5s {
+            animation: liveShake 0.5s ease-in-out 10;
+        }
+        @keyframes liveShake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-4px) rotate(-1deg); }
+            40% { transform: translateX(4px) rotate(1deg); }
+            60% { transform: translateX(-3px); }
+            80% { transform: translateX(3px); }
+        }
+
+        .portal-v2-card {
+            background: linear-gradient(135deg, rgba(0, 102, 255, 0.2) 0%, rgba(0, 229, 255, 0.1) 100%);
+            border: 2px solid rgba(0, 229, 255, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+        .portal-v2-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 229, 255, 0.15) 0%, transparent 60%);
+            animation: rotateGlow 6s linear infinite;
+        }
+        @keyframes rotateGlow {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .btn-v2-pulse {
+            animation: btnPulse 2s infinite;
+        }
+        @keyframes btnPulse {
+            0% { box-shadow: 0 0 0 0 rgba(0, 229, 255, 0.7); }
+            70% { box-shadow: 0 0 0 12px rgba(0, 229, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 229, 255, 0); }
+        }
+    </style>
+</head>
+<body class="bg-[#050b18] text-textMain min-h-screen w-full flex flex-col p-3 sm:p-5 m-0 overflow-x-hidden">
+
+    <!-- TOAST NOTIFICATION SYSTEM -->
+    <div id="byao-toast" class="fixed top-5 right-5 z-50 hidden bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 px-4 py-2.5 rounded-xl text-xs font-bold shadow-2xl backdrop-blur-md transition-all duration-300">
+        Ujumbe wa Mfumo
+    </div>
+
+    <!-- MODAL YA LOGIN YA MTEJA -->
+    <div id="loginScreen" class="fixed inset-0 bg-[#050b18]/98 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="w-full max-w-md space-y-4">
+            <div class="glass-card p-6 rounded-2xl text-center space-y-2 border border-[#00e5ff]/40 shadow-2xl">
+                <span class="bg-[#0066ff] text-white text-[10px] font-black px-3 py-1 rounded-lg uppercase tracking-wider shadow-md shadow-blue-500/30">GLOBAL CUSTOMER PORTAL</span>
+                <h2 class="text-xl font-black text-white tracking-tight mt-1">BYAO MOBILE SOLUTIONS</h2>
+                <p class="text-slate-400 text-xs">Weka jina na namba ya simu kuingia kwenye mfumo kupitia Supabase</p>
+            </div>
+            <div class="glass-card p-6 rounded-2xl space-y-4 shadow-2xl">
+                <div class="space-y-3 text-xs">
+                    <div>
+                        <label class="block font-bold text-slate-300 mb-1">Jina Lako Kamili:</label>
+                        <input type="text" id="loginJina" placeholder="Weka jina lako hapa..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-3 text-white focus:outline-none focus:border-[#00e5ff] transition">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-300 mb-1">Namba ya Simu / WhatsApp:</label>
+                        <input type="tel" id="loginSimu" placeholder="Mf. +255712345678..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-3 text-white focus:outline-none focus:border-[#00e5ff] transition">
+                    </div>
+                </div>
+                <button onclick="fanyaLoginMteja()" class="w-full bg-[#0066ff] hover:bg-blue-600 text-white font-black py-3 px-4 rounded-xl text-xs transition shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2">
+                    <i data-lucide="log-in" class="w-4 h-4"></i>
+                    <span>Ingia Kwenye Portal Yangu</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- HEADER KUU YA MTEJA -->
+    <header class="w-full max-w-7xl mx-auto flex justify-between items-center bg-[#081026] p-4 rounded-2xl border border-slate-800 mb-5 shadow-xl glass-card">
+        <div>
+            <div class="flex items-center space-x-2">
+                <span class="bg-[#0066ff] text-white text-[10px] font-black px-2 py-0.5 rounded uppercase">SUPABASE POWERED</span>
+                <span class="text-xs text-[#00e5ff] font-bold">BYAO Mobile Ecosystem</span>
+            </div>
+            <h1 class="text-base sm:text-lg font-black text-white tracking-tight mt-1">Portal ya Mteja Rasmi 2026</h1>
+        </div>
+        <div class="flex items-center gap-2 bg-[#050b18] p-1.5 pr-3 rounded-xl border border-slate-800">
+            <img id="userAvatarImg" src="https://ui-avatars.com/api/?name=Mteja+Mgeni&background=0066ff&color=fff&bold=true" class="w-8 h-8 rounded-lg border border-[#00e5ff]" alt="Mteja Profile">
+            <div class="text-left hidden xs:block">
+                <div id="userNameDisplay" class="text-[11px] font-black text-white leading-tight">Mteja Mgeni</div>
+                <div class="text-[9px] text-[#00e5ff] font-bold">Mwanachama Rasmi</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- KADI YENYE ANIMATION PROFESSIONAL YA KUMVUTA MTEJA AFUNGUE MTEJA NAMBA 2 -->
+    <section class="w-full max-w-7xl mx-auto mb-6">
+        <div class="portal-v2-card p-5 sm:p-6 rounded-2xl shadow-2xl flex flex-col md:flex-row items-center justify-between gap-4 z-10">
+            <div class="space-y-2 text-center md:text-left z-10">
+                <div class="flex items-center justify-center md:justify-start gap-2">
+                    <span class="bg-gradient-to-r from-cyan-400 to-blue-600 text-slate-950 font-black text-[10px] px-3 py-1 rounded-full uppercase tracking-wider animate-pulse">NEW GENERATION</span>
+                    <span class="text-xs text-cyan-300 font-extrabold flex items-center gap-1"><i data-lucide="sparkles" class="w-3.5 h-3.5 text-cyan-400"></i> Portal Version 2.0 VIP</span>
+                </div>
+                <h2 class="text-lg sm:text-xl font-black text-white tracking-wide">Fungua Portal ya Mteja Namba 2 (Ultra VIP Experience)</h2>
+                <p class="text-xs text-slate-300 max-w-2xl leading-relaxed">
+                    Pata huduma za haraka zaidi, ufuatiliaji wa satelaiti wa simu yako, mazungumzo ya moja kwa moja ya sauti na video na mafundi bingwa, pamoja na punguzo la kipekee la vipuri!
+                </p>
+            </div>
+            <div class="z-10 flex-shrink-0 w-full md:w-auto">
+                <a href="mteja2.html" target="_blank" onclick="funguaMtejaNamba2(event)" class="btn-v2-pulse w-full md:w-auto bg-gradient-to-r from-[#00e5ff] to-[#0066ff] hover:from-cyan-400 hover:to-blue-600 text-slate-950 font-black px-6 py-3.5 rounded-xl text-xs transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer">
+                    <i data-lucide="external-link" class="w-4 h-4 text-slate-950"></i>
+                    <span>FUNGUA MTEJA NAMBA 2 SASA</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- SEHEMU KUU ZA MAUDHUI YA MTEJA (GRID YA SEHEMU KUU NA SIDEBAR) -->
+    <main class="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
+
+        <!-- UPANDE WA KUSHOTO: CHAT ENGINE & HUDUMA KUU (COL-SPAN-2) -->
+        <div class="lg:col-span-2 space-y-6">
+
+            <!-- MATANGAZO YANAYOTOKA SUPABASE -->
+            <section class="glass-card p-5 sm:p-6 rounded-2xl shadow-xl space-y-3 border border-amber-500/30">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                    <h2 class="text-sm font-extrabold text-amber-400 flex items-center gap-2">
+                        <i data-lucide="megaphone" class="w-4 h-4"></i> 📢 Matangazo na Taarifa Maalum (Global Ads)
+                    </h2>
+                    <span class="text-[10px] bg-amber-500/20 text-amber-300 px-2.5 py-0.5 rounded font-bold">Live kutoka Supabase</span>
+                </div>
+                <div id="globalAdsContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="text-xs text-slate-400 italic">Inapakia matangazo...</div>
+                </div>
+            </section>
+
+            <!-- GLOBAL TECHNICIAN FINDER -->
+            <section class="glass-card p-5 sm:p-6 rounded-2xl shadow-xl space-y-4 border border-[#00e5ff]/30">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                    <h2 class="text-sm font-extrabold text-[#00e5ff] flex items-center gap-2">
+                        <i data-lucide="map-pin" class="w-4 h-4"></i> 🌍 Tafuta Fundi Aliye Karibu Nawe (Global Location Finder)
+                    </h2>
+                    <span class="text-[10px] bg-blue-500/20 text-blue-300 px-2.5 py-0.5 rounded font-bold">International Coverage</span>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                    <div>
+                        <label class="block font-bold text-slate-300 mb-1">Nchi (Country):</label>
+                        <select id="techSearchCountry" class="w-full bg-[#050b18] border border-slate-800 p-3 rounded-xl text-white focus:outline-none focus:border-[#00e5ff]" onchange="filterTechniciansByLocation()">
+                            <option value="ALL">Nchi Zote (All Countries)</option>
+                            <option value="Tanzania">Tanzania 🇹🇿</option>
+                            <option value="Kenya">Kenya 🇰🇪</option>
+                            <option value="DRC">DR Congo 🇨🇩</option>
+                            <option value="Rwanda">Rwanda 🇷🇼</option>
+                            <option value="Burundi">Burundi 🇧🇮</option>
+                            <option value="Uganda">Uganda 🇺🇬</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-300 mb-1">Mji / Wilaya / Eneo:</label>
+                        <input type="text" id="techSearchCity" placeholder="Mf. Kariakoo, Nairobi, Goma, Bujumbura..." class="w-full bg-[#050b18] border border-slate-800 p-3 rounded-xl text-white focus:outline-none focus:border-[#00e5ff]" onkeyup="filterTechniciansByLocation()">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-300 mb-1">Aina ya Matengenezo:</label>
+                        <select id="techSpecialty" class="w-full bg-[#050b18] border border-slate-800 p-3 rounded-xl text-white focus:outline-none focus:border-[#00e5ff]" onchange="filterTechniciansByLocation()">
+                            <option value="ALL">Utaalamu Wote</option>
+                            <option value="Hardware">Hardware & Vioo (Screens)</option>
+                            <option value="Software">Software, Unlocking & Flashing</option>
+                            <option value="Motherboard">Motherboard & Chip Repair</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="techniciansListResult" class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2"></div>
+            </section>
+
+            <!-- 1. DEVICE TRACKING -->
+            <section class="glass-card p-5 sm:p-6 rounded-2xl shadow-xl space-y-3">
+                <h2 class="text-sm font-extrabold text-[#00e5ff] flex items-center gap-2">
+                    <i data-lucide="search" class="w-4 h-4"></i> 1. Angalia Hali ya Simu Yako (Device Tracking)
+                </h2>
+                <p class="text-xs text-slate-400">Weka namba ya risiti au namba yako ya simu kuona hatua iliyofikia simu yako iliyopo kwa fundi.</p>
+                <div class="flex gap-2">
+                    <input type="text" id="clientTrackInput" placeholder="Weka namba ya risiti (Mf. BYAO-1001)..." class="w-full bg-[#050b18] border border-slate-800 p-3 rounded-xl text-xs text-white focus:outline-none focus:border-[#00e5ff]">
+                    <button class="bg-[#0066ff] hover:bg-blue-600 text-white font-bold px-5 py-3 rounded-xl text-xs transition shadow-lg flex items-center gap-1.5" onclick="trackClientDevice()">
+                        <i data-lucide="search" class="w-3.5 h-3.5"></i> Tafuta
+                    </button>
+                </div>
+                <div id="clientTrackResult" class="hidden mt-3 p-3.5 bg-[#050b18] border border-slate-800 rounded-xl text-xs space-y-1"></div>
+            </section>
+
+            <!-- 2. MULTIMEDIA LIVE CHAT ENGINE -->
+            <section class="glass-card border border-[#00e5ff]/40 p-5 sm:p-6 rounded-2xl shadow-2xl space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                    <h2 class="text-sm font-extrabold text-[#00e5ff] flex items-center gap-2">
+                        <i data-lucide="message-square" class="w-4 h-4"></i> 2. Chumba cha Mfumo wa Mawasiliano (Live Chat Engine)
+                    </h2>
+                    <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> Live & Supabase
+                    </span>
+                </div>
+
+                <div class="scam-warning flex items-center gap-2">
+                    <i data-lucide="shield-alert" class="w-5 h-5 flex-shrink-0"></i>
+                    <span><b>Onyo la Usalama (Anti-Scam Protection):</b> Usitume malipo ya fedha nje ya mfumo au kabla ya kuhakiki huduma ya fundi au mfanyabiashara wako.</span>
+                </div>
+                
+                <div class="flex flex-col space-y-3">
+                    <div class="chat-box bg-darkBg border border-borderCol p-4 rounded-xl" id="chat-messages">
+                        <div class="msg incoming">Habari! Karibu kwenye chumba cha mawasiliano cha Byao kupitia Supabase. Tuma ujumbe wako hapa chini.</div>
+                    </div>
+
+                    <div id="chat-preview-box" class="preview-container">
+                        <div class="flex flex-col w-full gap-2 overflow-hidden">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-bold text-accent uppercase tracking-wider">Preview ya Vyombo vya Habari / Ujumbe:</span>
+                                <button type="button" class="bg-red-600 text-white px-2.5 py-1 rounded text-[10px] font-bold hover:bg-red-700 transition" onclick="cancelMediaPreview()">Futa</button>
+                            </div>
+                            
+                            <div class="flex items-center gap-2.5 bg-slate-950 p-2.5 rounded-xl border border-borderCol">
+                                <div id="preview-thumb-container" class="flex-shrink-0"></div>
+                                <div class="flex flex-col overflow-hidden w-full">
+                                    <div id="preview-file-name" class="text-xs text-white truncate font-medium">Faili au Ujumbe Teule</div>
+                                    <div id="preview-media-player" class="mt-1 w-full"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2 items-center">
+                        <button type="button" class="bg-darkBg border border-borderCol p-3 rounded-xl text-accent hover:bg-slate-800 transition flex items-center justify-center" title="Ambatisha Picha, Video, Audio au PDF" onclick="document.getElementById('chat-file-input').click()">📎</button>
+                        <input type="file" id="chat-file-input" class="hidden" accept="image/*,video/*,audio/*,.pdf" onchange="handleFileSelected(event)">
+                        
+                        <button type="button" id="voiceRecordBtn" onclick="toggleVoiceRecording()" class="bg-darkBg border border-borderCol p-3 rounded-xl text-accent hover:bg-slate-800 transition flex items-center justify-center" title="Rekodi Sauti (Voice Note)">🎤</button>
+                        
+                        <input type="text" class="w-full bg-darkBg border border-borderCol p-3 rounded-xl text-xs text-white focus:outline-none focus:border-accent" id="chat-input" placeholder="Andika ujumbe wako..." oninput="updateMessagePreview()">
+                        
+                        <button type="button" class="bg-accent hover:bg-emerald-600 text-white font-bold px-5 py-3 rounded-xl text-xs transition flex items-center justify-center shadow-lg shadow-emerald-900/30" onclick="sendMessage()">Tuma 🚀</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- KADI NYINGINE YA TANGAZO TOKA SUPABASE CHINI YA CHAT -->
+            <section class="glass-card p-5 sm:p-6 rounded-2xl shadow-xl space-y-3 border border-cyan-500/30">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                    <h2 class="text-sm font-extrabold text-[#00e5ff] flex items-center gap-2">
+                        <i data-lucide="tag" class="w-4 h-4"></i> 💥 Ofa & Matangazo ya Fundi/Duka (Supabase Feed)
+                    </h2>
+                    <span class="text-[10px] bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded font-bold">Sponsored</span>
+                </div>
+                <div id="firebaseAdsContainerChatBottom" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="text-xs text-slate-400 italic">Inapakia matangazo ya ziada...</div>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- UPANDE WA KULIA: SIDEBAR -->
+        <aside class="space-y-4 lg:w-80">
+
+            <!-- 3. PRICE CALCULATOR -->
+            <section class="glass-card p-5 rounded-2xl shadow-xl space-y-4 border border-[#00e5ff]/30">
+                <h2 class="text-sm font-extrabold text-[#00e5ff] flex items-center gap-2">
+                    <i data-lucide="calculator" class="w-4 h-4"></i> 3. Kikokotoo cha Makisio (Price Calculator)
+                </h2>
+                <div class="space-y-3 text-xs">
+                    <div>
+                        <label class="block font-bold text-slate-400 mb-1">Sarafu (Currency)</label>
+                        <select class="w-full bg-[#050b18] border border-slate-800 p-2.5 rounded-xl text-white focus:outline-none focus:border-[#00e5ff]" id="est-currency" onchange="calculatePrice()">
+                            <option value="TZS" data-rate="1" data-symbol="TZS">TZS (Tsh)</option>
+                            <option value="USD" data-rate="0.00038" data-symbol="$">USD ($)</option>
+                            <option value="KES" data-rate="0.050" data-symbol="KES">KES (Ksh)</option>
+                            <option value="CDF" data-rate="1.05" data-symbol="CDF">CDF (Fc)</option>
+                            <option value="RWF" data-rate="0.52" data-symbol="RWF">RWF (FRw)</option>
+                            <option value="BIF" data-rate="1.10" data-symbol="BIF">BIF (FBu)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-400 mb-1">Aina ya Simu</label>
+                        <select class="w-full bg-[#050b18] border border-slate-800 p-2.5 rounded-xl text-white focus:outline-none focus:border-[#00e5ff]" id="est-phone" onchange="calculatePrice()">
+                            <option value="15000">Tecno / Infinix / Itel</option>
+                            <option value="30000">Samsung Galaxy Series</option>
+                            <option value="50000">Apple iPhone Series</option>
+                            <option value="25000">Xiaomi / Oppo / Vivo</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-400 mb-1">Tatizo la Simu</label>
+                        <select class="w-full bg-[#050b18] border border-slate-800 p-2.5 rounded-xl text-white focus:outline-none focus:border-[#00e5ff]" id="est-problem" onchange="calculatePrice()">
+                            <option value="25000">Kubadilisha Kioo (Screen)</option>
+                            <option value="15000">Kubadilisha Betri (Battery)</option>
+                            <option value="10000">Bandari ya Kuchaji (Charging)</option>
+                            <option value="35000">Software / Network Unlock</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="est-result" class="p-3 bg-[#050b18] border border-slate-800 rounded-xl text-center font-black text-[#00e5ff] text-xs shadow-inner">
+                    Makisio ya Bei: TZS 40,000
+                </div>
+            </section>
+
+            <!-- 4. SPARES CATALOGUE -->
+            <section class="glass-card p-5 rounded-2xl shadow-xl space-y-3">
+                <h2 class="text-sm font-extrabold text-[#00e5ff] flex items-center gap-2">
+                    <i data-lucide="shopping-bag" class="w-4 h-4"></i> 4. Vipuri & Vifaa (Spares)
+                </h2>
+                <p class="text-[11px] text-slate-400">Orodha ya vipuri kutoka Supabase.</p>
+                <div id="spareCatalogueContainer" class="space-y-2.5 max-h-80 overflow-y-auto pr-1"></div>
+            </section>
+
+            <!-- 5. MY RECEIPTS -->
+            <section class="glass-card p-5 rounded-2xl shadow-xl space-y-3">
+                <h2 class="text-sm font-extrabold text-[#00e5ff] flex items-center gap-2">
+                    <i data-lucide="receipt" class="w-4 h-4"></i> 5. 🧾 Risiti Zangu (Receipts)
+                </h2>
+                <p class="text-[11px] text-slate-400">Kumbukumbu za malipo ya vifaa vyako.</p>
+                <div id="myReceiptsContainer" class="space-y-2"></div>
+            </section>
+
+            <!-- 6. FEEDBACK -->
+            <section class="glass-card p-5 rounded-2xl shadow-xl space-y-3">
+                <h2 class="text-sm font-extrabold text-[#00e5ff] flex items-center gap-2">
+                    <i data-lucide="star" class="w-4 h-4"></i> 6. ⭐ Maoni (Service Feedback)
+                </h2>
+                <div class="space-y-3 text-xs">
+                    <div>
+                        <label class="block font-bold text-slate-300 mb-1">Chagua Nyota:</label>
+                        <select id="clientRatingStars" class="w-full bg-[#050b18] border border-slate-800 p-2.5 rounded-xl text-white focus:outline-none focus:border-[#00e5ff]">
+                            <option value="5">★★★★★ - Vizuri Sana</option>
+                            <option value="4">★★★★☆ - Vizuri</option>
+                            <option value="3">★★★☆☆ - Wastani</option>
+                            <option value="2">★★☆☆☆ - Mbaya</option>
+                            <option value="1">★☆☆☆☆ - Mbaya Sana</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-300 mb-1">Maoni Yako:</label>
+                        <textarea id="clientFeedbackComment" placeholder="Andika maoni yako..." class="w-full bg-[#050b18] border border-slate-800 p-2.5 rounded-xl text-white h-16 focus:outline-none focus:border-[#00e5ff]"></textarea>
+                    </div>
+                    <button onclick="submitClientFeedback()" class="w-full bg-[#0066ff] hover:bg-blue-600 text-white font-bold py-2.5 rounded-xl transition text-xs">Wasilisha Maoni</button>
+                </div>
+            </section>
+
+            <!-- 7. WARRANTY TRACKER -->
+            <section class="glass-card p-5 rounded-2xl shadow-xl space-y-3">
+                <h2 class="text-sm font-extrabold text-[#00e5ff] flex items-center gap-2">
+                    <i data-lucide="shield-check" class="w-4 h-4"></i> 7. 🛡️ Udhamana (Warranty)
+                </h2>
+                <div id="warrantyContainer" class="bg-[#050b18] p-3 rounded-xl border border-slate-800 text-[11px] space-y-2">
+                    <div class="flex justify-between"><span>Kifaa:</span> <b class="text-white">Tecno Spark 10</b></div>
+                    <div class="flex justify-between"><span>Siku Zilizobaki:</span> <b class="text-emerald-400">Siku 28</b></div>
+                    <div class="flex justify-between"><span>Hali:</span> <b class="text-[#00e5ff]">Inafanya Kazi</b></div>
+                </div>
+            </section>
+
+            <!-- 8. TECH TIPS -->
+            <section class="glass-card p-5 rounded-2xl shadow-xl space-y-3">
+                <h2 class="text-sm font-extrabold text-[#00e5ff] flex items-center gap-2">
+                    <i data-lucide="lightbulb" class="w-4 h-4"></i> 8. 💡 Tips za Simu (Tech Tips)
+                </h2>
+                <div class="space-y-2 text-[11px] text-slate-300">
+                    <div class="bg-[#050b18] p-2.5 rounded-xl border border-slate-800">
+                        <b>• Utunzaji Betri:</b> Usitumie simu ikiwa kwenye chaji kuzuia joto kali.
+                    </div>
+                    <div class="bg-[#050b18] p-2.5 rounded-xl border border-slate-800">
+                        <b>• Usalama wa Kioo:</b> Tumia Tempered Glass ya ubora kuzuia kupondeka.
+                    </div>
+                </div>
+            </section>
+
+            <!-- 9. PICKUP REQUEST -->
+            <section class="glass-card p-5 rounded-2xl shadow-xl space-y-3">
+                <h2 class="text-sm font-extrabold text-[#00e5ff] flex items-center gap-2">
+                    <i data-lucide="truck" class="w-4 h-4"></i> 9. 🚀 Omba Pickup Service
+                </h2>
+                <div class="space-y-3 text-xs">
+                    <input type="text" id="pickupLocation" placeholder="Weka eneo lako kamili..." class="w-full bg-[#050b18] border border-slate-800 p-2.5 rounded-xl text-white focus:outline-none focus:border-[#00e5ff]">
+                    <button onclick="requestPickupService()" class="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold py-2.5 rounded-xl transition shadow-lg flex items-center justify-center gap-2">
+                        <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                        <span>Omba Usafiri wa Kifaa</span>
+                    </button>
+                </div>
+            </section>
+
+        </aside>
+
+    </main>
+
+    <footer class="w-full max-w-7xl mx-auto text-center py-6 mt-6 border-t border-slate-800 text-slate-500 text-xs">
+        <p>© 2026 BYAO Mobile Solution - Supabase Migration Edition</p>
+    </footer>
+
+    <!-- JAVASCRIPT ENGINE (SUPABASE STORAGE INTEGRATED) -->
+    <script>
+
+        let selectedFileObject = null;
+        let selectedFileType = '';
+        let mediaBase64Data = null;
+        let isRecording = false;
+        let mediaRecorder = null;
+        let audioChunks = [];
+
+        let dbSimu = [];
+        let dbTechnicians = [];
+        let dbMerchantProducts = [];
+
+        let currentUserPhone = '';
+        let currentSelectedTechId = 'GENERAL';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            initSupabaseRealtimeSync();
+            calculatePrice();
+
+            const savedName = localStorage.getItem('byao_user_name');
+            const savedPhone = localStorage.getItem('byao_user_phone');
+
+            if (savedName && savedPhone) {
+                currentUserPhone = savedPhone;
+                document.getElementById('userNameDisplay').innerText = savedName;
+                
+                const avatarElem = document.getElementById('userAvatarImg');
+                if (avatarElem) {
+                    avatarElem.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(savedName)}&background=0066ff&color=fff&bold=true`;
+                }
+                
+                const loginScreen = document.getElementById('loginScreen');
+                if (loginScreen) {
+                    loginScreen.classList.add('hidden');
+                }
+
+                loadPrivateChatHistory();
+            }
+        });
+
+        function showToast(msg, duration = 3500) {
+            const toast = document.getElementById('byao-toast');
+            if (!toast) return;
+            toast.innerText = msg;
+            toast.classList.remove('hidden');
+            setTimeout(() => { toast.classList.add('hidden'); }, duration);
+        }
+
+        function funguaMtejaNamba2(e) {
+            showToast("🚀 Inafungua Portal ya Mteja Namba 2 (VIP)...");
+        }
+
+        function cleanPhoneNumber(phone) {
+            return phone.replace(/[^0-9]/g, '');
+        }
+
+        function fanyaLoginMteja() {
+            const jina = document.getElementById('loginJina').value.trim();
+            const rawSimu = document.getElementById('loginSimu').value.trim();
+
+            if (!jina || !rawSimu) {
+                showToast("⚠️ Tafadhali jaza Jina na Namba ya Simu!");
+                return;
+            }
+
+            currentUserPhone = cleanPhoneNumber(rawSimu);
+
+            if (currentUserPhone.length < 8) {
+                showToast("⚠️ Tafadhali weka namba ya simu iliyo sahihi!");
+                return;
+            }
+
+            localStorage.setItem('byao_user_name', jina);
+            localStorage.setItem('byao_user_phone', currentUserPhone);
+
+            document.getElementById('userNameDisplay').innerText = jina;
+            document.getElementById('userAvatarImg').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(jina)}&background=0066ff&color=fff&bold=true`;
+            document.getElementById('loginScreen').classList.add('hidden');
+            
+            showToast(`✅ Karibu kwenye portal yako, ${jina}!`);
+            loadPrivateChatHistory();
+        }
+
+        async function initSupabaseRealtimeSync() {
+            await fetchGlobalAds();
+            await fetchTechnicians();
+            await fetchDevices();
+            await fetchMerchantProducts();
+
+            supabaseClient
+                .channel('public-db-changes')
+                .on('postgres_changes', { event: '*', schema: 'public' }, payload => {
+                    console.log('Realtime change detected:', payload);
+                    fetchGlobalAds();
+                    fetchTechnicians();
+                    fetchDevices();
+                    fetchMerchantProducts();
+                    if(currentUserPhone) loadPrivateChatHistory();
+                })
+                .subscribe();
+        }
+
+        async function fetchGlobalAds() {
+            const { data, error } = await supabaseClient.from('global_ads').select('*');
+            if (data) renderGlobalAds(data);
+        }
+
+        async function fetchTechnicians() {
+            const { data, error } = await supabaseClient.from('technicians').select('*');
+            if (data && data.length > 0) {
+                dbTechnicians = data;
+            } else {
+                dbTechnicians = [
+                    { id: 'FUNDI-101', jina: 'Baraka Fix Tech', country: 'Tanzania', city: 'Kariakoo, Dar es Salaam', spec: 'Hardware', simu: '+255711000111', status: 'Online' }
+                ];
+            }
+            renderTechniciansList(dbTechnicians);
+        }
+
+        async function fetchDevices() {
+            const { data, error } = await supabaseClient.from('devices').select('*');
+            if (data && data.length > 0) {
+                dbSimu = data;
+            } else {
+                dbSimu = [
+                    { id: 'BYAO-1001', jina: 'Amani John', namba: '0712345678', brand: 'Tecno', model: 'Spark 10', tatizo: 'Kioo Kimevunjika', bei: 45000, amelipa: 20000, status: 'Imepokelewa kwa Fundi', tarehe: '2026-08-01' }
+                ];
+            }
+            renderMyReceipts();
+        }
+
+        async function fetchMerchantProducts() {
+            const { data, error } = await supabaseClient.from('merchant_products').select('*');
+            if (data && data.length > 0) {
+                dbMerchantProducts = data;
+            } else {
+                dbMerchantProducts = [
+                    { id: 'SP-1', jina: 'Display Screen Tecno Spark 10', bei: 28000, stock: 15 },
+                    { id: 'SP-2', jina: 'Original Battery Samsung A12', bei: 18000, stock: 8 }
+                ];
+            }
+            renderSpareCatalogue();
+        }
+
+                        // Kitendakazi cha kuchagua vitufe vinavyoendana na maudhui ya tangazo (Smart Buttons)
+        function getSmartActionButtons(ad) {
+            const textContent = ((ad.title || '') + ' ' + (ad.desc || ad.description || '')).toLowerCase();
+            
+            let buttonsHtml = '<div class="flex flex-wrap gap-1.5 pt-2 border-t border-slate-800/80 mt-2">';
+            
+            // 1. Vitendo vya msingi kwa kila tangazo (Kupenda na Kugawanya)
+            buttonsHtml += `
+                <button onclick="handleAdAction('like', '${ad.id || 'ad'}')" class="bg-slate-800 hover:bg-slate-700 text-rose-400 text-[10px] px-2.5 py-1 rounded-md font-bold flex items-center gap-1 transition">
+                    ❤️ Penda
+                </button>
+                <button onclick="handleAdAction('share', '${ad.title || 'Tangazo'}')" class="bg-slate-800 hover:bg-slate-700 text-sky-400 text-[10px] px-2.5 py-1 rounded-md font-bold flex items-center gap-1 transition">
+                    🔗 Gawa
+                </button>
+            `;
+
+            // 2. Kuchuja kulingana na ujumbe wa tangazo
+            if (textContent.includes('nunua') || textContent.includes('bei') || textContent.includes('bidhaa')  || textContent.includes('duka') || textContent.includes('smartphone') || textContent.includes('simu')) {
+                buttonsHtml += `
+                    <button onclick="handleAdAction('buy', '${ad.title || ''}')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] px-2.5 py-1 rounded-md font-bold flex items-center gap-1 transition">
+                        🛒 Nunua
+                    </button>
+                    <button onclick="handleAdAction('call', '${ad.phone || ''}')" class="bg-blue-600 hover:bg-blue-500 text-white text-[10px] px-2.5 py-1 rounded-md font-bold flex items-center gap-1 transition">
+                        📞 Piga Simu
+                    </button>
+                `;
+            } else if (textContent.includes('mafunzo')  || textContent.includes('funza') || textContent.includes('somo') || textContent.includes('jifunze') || textContent.includes('class') || textContent.includes('kozi')) {
+                buttonsHtml += `
+                    <button onclick="handleAdAction('learn', '${ad.title || ''}')" class="bg-amber-600 hover:bg-amber-500 text-white text-[10px] px-2.5 py-1 rounded-md font-bold flex items-center gap-1 transition">
+                        📚 Jifunze
+                    </button>
+                    <button onclick="handleAdAction('follow', '${ad.title || ''}')" class="bg-purple-600 hover:bg-purple-500 text-white text-[10px] px-2.5 py-1 rounded-md font-bold flex items-center gap-1 transition">
+                        🎯 Fuatilia
+                    </button>
+                    <button onclick="handleAdAction('save', '${ad.title || ''}')" class="bg-slate-700 hover:bg-slate-600 text-amber-300 text-[10px] px-2.5 py-1 rounded-md font-bold flex items-center gap-1 transition">
+                        🔖 Hifadhi
+                    </button>
+                `;
+            } else if (textContent.includes('app') || textContent.includes('programu') || textContent.includes('install') || textContent.includes('pakua') || textContent.includes('tool')) {
+                buttonsHtml += `
+                    <button onclick="handleAdAction('install', '${ad.url || ''}')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] px-2.5 py-1 rounded-md font-bold flex items-center gap-1 transition">
+                        📥 Install / Pakua
+                    </button>
+                `;
+            } else {
+                // Vitendo vya jumla kama tangazo halijajipambanua
+                buttonsHtml += `
+                    <button onclick="handleAdAction('call', '${ad.phone || ''}')" class="bg-blue-600 hover:bg-blue-500 text-white text-[10px] px-2.5 py-1 rounded-md font-bold flex items-center gap-1 transition">
+                        📞 Wasiliana
+                    </button>
+                    <button onclick="handleAdAction('save', '${ad.title || ''}')" class="bg-slate-700 hover:bg-slate-600 text-amber-300 text-[10px] px-2.5 py-1 rounded-md font-bold flex items-center gap-1 transition">
+                        🔖 Hifadhi
+                    </button>
+                `;
+            }
+
+            buttonsHtml += '</div>';
+            return buttonsHtml;
+        }
+
+        // Kitendakazi cha kushughulikia mibofyo ya vitufe vya matangazo
+        function handleAdAction(actionType, param) {
+            if (actionType === 'like') {
+                showToast("❤️ Umependa tangazo hili!");
+            } else if (actionType === 'share') {
+                if (navigator.share) {
+                    navigator.share({ title: 'Tangazo', text: `Angalia tangazo hili zuri: ${param}`, url: window.location.href }).catch(() => {});
+                } else {
+                    showToast("🔗 Kiungo kimenakiliwa kwa ajili ya kushare!");
+                }
+            } else if (actionType === 'buy') {
+                showToast("🛒 Unaelekezwa kwenye mfumo wa malipo/manunuzi...");
+                // Weka hapa mantiki yako ya manunuzi
+            } else if (actionType === 'call') {
+                if (param && param !== 'undefined') {
+                    window.location.href = `tel:${param}`;
+                } else {
+                    showToast("📞 Piga simu kupitia nambari iliyopo kwenye tangazo.");
+                }
+            } else if (actionType === 'learn' || actionType === 'follow') {
+                showToast("🎯 Unaelekezwa kwenye somo/mafunzo...");
+            } else if (actionType === 'save') {
+                showToast("🔖 Tangazo limehifadhiwa kwenye kumbukumbu zako!");
+            } else if (actionType === 'install') {
+                showToast("📥 Inaanzisha upakuaji/install...");
+                if (param) window.open(param, '_blank');
+            }
+        }
+
+             function renderGlobalAds(allAds) {
+            const adsContainer = document.getElementById('globalAdsContainer');
+            const chatBottomAdsContainer = document.getElementById('firebaseAdsContainerChatBottom');
+            
+            if (adsContainer) adsContainer.innerHTML = '';
+            if (chatBottomAdsContainer) chatBottomAdsContainer.innerHTML = '';
+
+            if (!allAds || allAds.length === 0) {
+                const emptyMsg = `<div class="text-xs text-slate-500 italic col-span-full">Hakuna matangazo yaliyo hewani kwa sasa.</div>`;
+                if (adsContainer) adsContainer.innerHTML = emptyMsg;
+                if (chatBottomAdsContainer) chatBottomAdsContainer.innerHTML = emptyMsg;
+                return;
+            }
+
+            allAds.forEach((ad) => {
+                const adCard = document.createElement('div');
+                adCard.className = "shake-live-5s bg-[#050b18] border border-amber-500/30 p-3.5 rounded-xl text-xs space-y-3 text-white shadow-lg mb-4";
+
+                const mediaUrl = ad.media_url || ad.mediaUrl || ad.videoUrl || ad.imageUrl || ad.media || ad.url || '';
+                const mediaType = ad.media_type || ad.mediaType || '';
+                const adCategory = (ad.category || ad.type || ad.title || "").toLowerCase();
+                const contactPhone = ad.phone || ad.whatsapp || "255700000000"; // Namba ya mfano au ya tangazo
+                const adLink = ad.link || ad.website || mediaUrl || "#";
+                const adTitle = ad.title || 'Tangazo Rasmi';
+                const adDesc = ad.desc || ad.description || '';
+                const purchaseCount = ad.buyers_count || ad.purchases || Math.floor(Math.random() * 45) + 5; // Idadi ya walionunua
+
+                let mediaTag = '';
+                if (mediaUrl) {
+                    const isVideo = mediaType === 'video' || mediaUrl.match(/\.(mp4|webm|ogg|mov)$/i) || mediaUrl.includes('video');
+                    if (isVideo) {
+                        mediaTag = `<div class="w-full rounded-lg overflow-hidden border border-slate-800 mt-2"><video src="${mediaUrl}" controls playsinline preload="metadata" class="w-full max-h-48 object-cover rounded-lg"></video></div>`;
+                    } else {
+                        mediaTag = `<div class="w-full rounded-lg overflow-hidden border border-slate-800 mt-2"><img src="${mediaUrl}" class="w-full max-h-48 object-cover rounded-lg" alt="Ad" /></div>`;
+                    }
+                }
+
+                // --- UTENGENEZAJI WA VITUFE VYA AKILI (SMART ACTION BUTTONS) ---
+                let actionButtonsHTML = '';
+                let extraInfoHTML = '';
+
+                // Kitufe cha Penda (Kila tangazo linacho)
+                const likeBtn = `<button onclick="this.classList.toggle('text-red-500'); this.classList.toggle('border-red-500'); showToast('❤️ Umependa tangazo hili!');" class="flex items-center gap-1 bg-slate-800/80 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-md border border-slate-700 text-[10px] transition"><span class="text-red-400">❤️</span> Penda</button>`;
+                
+                // Kitufe cha Gawa / Share (Kinafungua menyu au Web Share API / Copy Link)
+                const shareText = encodeURIComponent(`Angalia tangazo hili zuri: ${adTitle} - ${adDesc}`);
+                const shareBtn = `<button onclick="if(navigator.share){navigator.share({title:'${adTitle}', text:'${shareText}', url:'${window.location.href}'}).catch(()=>{});}else{navigator.clipboard.writeText(window.location.href); showToast('📋 Kiungo kimenakiliwa tayari kushiriki!');}" class="flex items-center gap-1 bg-slate-800/80 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-md border border-slate-700 text-[10px] transition"><span>🔗</span> Gawa</button>`;
+
+                if (adCategory.includes('app') || adCategory.includes('installer') || adCategory.includes('apk') || adCategory.includes('download')) {
+                    // Kundi la Programu / App / Installer
+                    actionButtonsHTML = `
+                        <a href="${adLink}" download target="_blank" class="flex items-center justify-center gap-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-md text-[10px] shadow transition"><span>📥</span> Installer (Pakua)</a>
+                        <a href="${adLink}" download class="flex items-center justify-center gap-1 bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 py-1.5 rounded-md text-[10px] shadow transition"><span>💾</span> Hifadhi</a>
+                        ${likeBtn}
+                        ${shareBtn}
+                    `;
+                } else if (adCategory.includes('mafunzo') || adCategory.includes('course') || adCategory.includes('training')  || adCategory.includes('soma')) {
+                    // Kundi la Mafunzo / Elimu
+                    actionButtonsHTML = `
+                        <a href="${adLink}" target="_blank" class="flex items-center justify-center gap-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-1.5 rounded-md text-[10px] shadow transition"><span>📖</span> Jifunze</a>
+                        <a href="${adLink}" target="_blank" class="flex items-center justify-center gap-1 bg-amber-600 hover:bg-amber-500 text-white font-bold px-3 py-1.5 rounded-md text-[10px] shadow transition"><span>🔍</span> Fuatilia</a>
+                        <button onclick="const a=document.createElement('a'); a.href='${mediaUrl || adLink}'; a.download=''; a.click(); showToast('💾 Inahifadhi mafunzo...');" class="flex items-center justify-center gap-1 bg-slate-700 hover:bg-slate-600 text-white font-bold px-3 py-1.5 rounded-md text-[10px] shadow transition"><span>📥</span> Hifadhi</button>
+                        ${likeBtn}
+                        ${shareBtn}
+                    `;
+                } else if (adCategory.includes('bidhaa') || adCategory.includes('product') || adCategory.includes('nunua') || adCategory.includes('duka')) {
+                    // Kundi la Bidhaa / Mauzo
+                    extraInfoHTML = `<div class="text-[10px] text-emerald-400 font-semibold bg-emerald-950/40 border border-emerald-500/30 px-2 py-1 rounded">🛒 Tayari wamenunua: <b class="text-white">${purchaseCount}</b> wateja</div>`;
+                    actionButtonsHTML = `
+                        <a href="https://wa.me/${contactPhone}?text=Habari,%20nimevutiwa%20na%20bidhaa%20hii:%20${encodeURIComponent(adTitle)}" target="_blank" class="flex items-center justify-center gap-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-md text-[10px] shadow transition"><span>🛒</span> Nunua</a>
+                        <a href="https://wa.me/${contactPhone}?text=Habari,%20nahitaji%20maelezo%20zaidi%20kuhusu:%20${encodeURIComponent(adTitle)}" target="_blank" class="flex items-center justify-center gap-1 bg-green-700 hover:bg-green-600 text-white font-bold px-3 py-1.5 rounded-md text-[10px] shadow transition"><span>📞</span> Piga Simu (WhatsApp)</a>
+                        ${likeBtn}
+                        ${shareBtn}
+                    `;
+                } else {
+                    // Kundi la Kawaida / Jumla (Default Smart Actions)
+                    actionButtonsHTML = `
+                        <a href="https://wa.me/${contactPhone}?text=Habari,%20kuhusu%20tangazo%20lako:%20${encodeURIComponent(adTitle)}" target="_blank" class="flex items-center justify-center gap-1 bg-green-600 hover:bg-green-500 text-white font-bold px-3 py-1.5 rounded-md text-[10px] shadow transition"><span>💬</span> Wasiliana</a>
+                        <a href="${adLink}" target="_blank" class="flex items-center justify-center gap-1 bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 py-1.5 rounded-md text-[10px] shadow transition"><span>🌐</span> Fuatilia</a>
+                        ${likeBtn}
+                        ${shareBtn}
+                    `;
+                }
+
+                adCard.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <b class="text-amber-300 font-extrabold text-sm">${adTitle}</b>
+                        <span class="text-[9px] bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded font-bold">LIVE</span>
+                    </div>
+                    <p class="text-slate-300 text-[11px] leading-relaxed">${adDesc}</p>
+                    ${mediaTag}
+                    ${extraInfoHTML}
+                    <div class="grid grid-cols-2 gap-1.5 pt-2 border-t border-slate-800/80">
+                        ${actionButtonsHTML}
+                    </div>
+                `;
+                
+                if (adsContainer) adsContainer.appendChild(adCard.cloneNode(true));
+                if (chatBottomAdsContainer) chatBottomAdsContainer.appendChild(adCard.cloneNode(true));
+            });
+        }
+
+
+        function filterTechniciansByLocation() {
+            const country = document.getElementById('techSearchCountry').value;
+            const city = document.getElementById('techSearchCity').value.toLowerCase().trim();
+            const spec = document.getElementById('techSpecialty').value;
+
+            const filtered = dbTechnicians.filter(t => {
+                const matchCountry = country === 'ALL' || t.country === country;
+                const matchCity = !city || (t.city && t.city.toLowerCase().includes(city));
+                const matchSpec = spec === 'ALL' || t.spec === spec;
+                return matchCountry && matchCity && matchSpec;
+            });
+
+            renderTechniciansList(filtered);
+        }
+
+        function renderTechniciansList(list) {
+            const container = document.getElementById('techniciansListResult');
+            if(!container) return;
+            container.innerHTML = '';
+
+            if (list.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-slate-500 text-center py-4 text-xs">Hakuna fundi aliyepatikana kwa eneo ulilochagua.</div>`;
+                return;
+            }
+
+            list.forEach(t => {
+                const card = document.createElement('div');
+                card.className = "bg-[#050b18] border border-slate-800 p-3.5 rounded-xl text-xs space-y-2 text-white";
+                card.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <b class="text-[#00e5ff]">${t.jina}</b>
+                        <span class="text-[9px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-bold">● ${t.status || 'Online'}</span>
+                    </div>
+                    <div class="text-slate-300 text-[11px]">📍 ${t.city} (${t.country})</div>
+                    <div class="text-amber-400 text-[10px]">🛠️ Utaalamu: ${t.spec}</div>
+                    <button onclick="connectWithTechnician('${t.jina}', '${t.id || 'FUNDI-101'}')" class="w-full bg-[#0066ff] hover:bg-blue-600 text-white font-bold py-1.5 rounded-lg text-[11px] transition flex items-center justify-center gap-1">
+                        <i data-lucide="message-square" class="w-3 h-3"></i> Tuma Ujumbe / Ongea Naye
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function connectWithTechnician(techName, techId) {
+            currentSelectedTechId = techId || 'FUNDI-GENERAL';
+            showToast(`💬 Umeunganishwa kwenye chumba cha faragha na ${techName}`);
+            
+            const inputElem = document.getElementById('chat-input');
+            inputElem.value = `Habari ${techName}, naomba usaidizi wa kutengeneza simu yangu.`;
+            inputElem.focus();
+            updateMessagePreview();
+        }
+
+        function trackClientDevice() {
+            const val = document.getElementById('clientTrackInput').value.trim().toLowerCase();
+            const resBox = document.getElementById('clientTrackResult');
+            if (!val) {
+                showToast("⚠️ Weka namba ya risiti au simu!");
+                return;
+            }
+
+            const item = dbSimu.find(s => (s.id && s.id.toLowerCase() === val) || (s.namba && s.namba.includes(val)));
+            resBox.classList.remove('hidden');
+            if (item) {
+                resBox.innerHTML = `
+                    <div class="font-bold text-[#00e5ff]">Namba ya Risiti: ${item.id}</div>
+                    <div><b>Kifaa:</b> ${item.brand} ${item.model}</div>
+                    <div><b>Hatua ya Matengenezo:</b> <span class="text-emerald-400 font-bold">${item.status}</span></div>
+                    <div><b>Gharama:</b> Tsh ${(item.bei || 0).toLocaleString()} | <b>Iliyolipwa:</b> Tsh ${(item.amelipa || 0).toLocaleString()}</div>
+                `;
+            } else {
+                resBox.innerHTML = `<span class="text-rose-400">❌ Hakuna kifaa kilichopatikana kwa taarifa hizo.</span>`;
+            }
+        }
+        function updateMessagePreview() {
+            const text = document.getElementById('chat-input').value.trim();
+            if (text && !selectedFileObject) {
+                document.getElementById('chat-preview-box').classList.add('active');
+                document.getElementById('preview-thumb-container').innerHTML = '💬';
+                document.getElementById('preview-file-name').innerText = 'Ujumbe wa Maandishi';
+                document.getElementById('preview-media-player').innerHTML = `<p class="text-xs text-slate-300 italic truncate">"${text}"</p>`;
+            } else if (!selectedFileObject) {
+                document.getElementById('chat-preview-box').classList.remove('active');
+            }
+        }
+
+        function handleFileSelected(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            selectedFileObject = file;
+            selectedFileType = file.type;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                mediaBase64Data = e.target.result;
+                displayMediaPreview(file.name, file.size, file.type, mediaBase64Data);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function displayMediaPreview(fileName, fileSize, type, dataUrl) {
+            const previewBox = document.getElementById('chat-preview-box');
+            const thumbContainer = document.getElementById('preview-thumb-container');
+            const fileNameElem = document.getElementById('preview-file-name');
+            const mediaPlayerElem = document.getElementById('preview-media-player');
+
+            previewBox.classList.add('active');
+            const formattedSize = fileSize ? `(${(fileSize / (1024*1024)).toFixed(2)} MB)` : '';
+            fileNameElem.innerText = `${fileName} ${formattedSize}`;
+            
+            if (type.startsWith('image/')) {
+                thumbContainer.innerHTML = `<img src="${dataUrl}" class="w-12 h-12 object-cover rounded-lg border border-borderCol">`;
+                mediaPlayerElem.innerHTML = `<span class="text-[10px] text-emerald-400 font-bold">📷 Picha ipo tayari kutumwa</span>`;
+            } else if (type.startsWith('video/')) {
+                thumbContainer.innerHTML = '🎬';
+                mediaPlayerElem.innerHTML = `<video src="${dataUrl}" class="w-full max-h-32 rounded-lg mt-1" controls></video>`;
+            } else if (type.startsWith('audio/')) {
+                thumbContainer.innerHTML = '🎤';
+                mediaPlayerElem.innerHTML = `<audio src="${dataUrl}" class="w-full mt-1" controls></audio>`;
+            } else {
+                thumbContainer.innerHTML = '📎';
+                mediaPlayerElem.innerHTML = `<span class="text-[10px] text-slate-400">Faili la kawaida limeteuliwa</span>`;
+            }
+        }
+
+        async function toggleVoiceRecording() {
+            const btn = document.getElementById('voiceRecordBtn');
+            if (!isRecording) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    
+                    mediaRecorder.ondataavailable = event => {
+                        if (event.data && event.data.size > 0) audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                            mediaBase64Data = reader.result;
+                            selectedFileObject = new File([audioBlob], `voice_${Date.now()}.webm`, { type: 'audio/webm' });
+                            selectedFileType = 'audio/webm';
+                            displayMediaPreview(selectedFileObject.name, audioBlob.size, 'audio/webm', mediaBase64Data);
+                        };
+                        reader.readAsDataURL(audioBlob);
+                    };
+
+                    mediaRecorder.start();
+                    isRecording = true;
+                    btn.classList.add('recording-pulse');
+                    showToast("🎙️ Inarekodi sauti...");
+                } catch (err) {
+                    showToast("❌ Mfumo umeshindwa kufungua Maikrofoni!");
+                }
+            } else {
+                if (mediaRecorder) mediaRecorder.stop();
+                isRecording = false;
+                btn.classList.remove('recording-pulse');
+                showToast("⏹️ Kurekodi kukamilika!");
+            }
+        }
+
+        function cancelMediaPreview() {
+            selectedFileObject = null;
+            selectedFileType = '';
+            mediaBase64Data = null;
+            const fileInput = document.getElementById('chat-file-input');
+            if (fileInput) fileInput.value = '';
+            const previewBox = document.getElementById('chat-preview-box');
+            previewBox.classList.remove('active');
+            document.getElementById('preview-media-player').innerHTML = '';
+            updateMessagePreview();
+        }
+
+        // Kazi ya kuonyesha Spinner na Hali ya Kupakia kwenye Sehemu ya Hakiki
+        function showLoadingOnPreview(message = "Inapakia kwenye Supabase...") {
+            const previewBox = document.getElementById('chat-preview-box');
+            previewBox.classList.add('active');
+            const thumbContainer = document.getElementById('preview-thumb-container');
+            const mediaPlayerElem = document.getElementById('preview-media-player');
+            
+            thumbContainer.innerHTML = `<div class="w-6 h-6 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin"></div>`;
+            mediaPlayerElem.innerHTML = `<span class="text-[10px] text-amber-400 font-bold flex items-center gap-1">⏳ ${message}</span>`;
+        }
+
+        // Kazi ya kuonyesha kitufe cha Kurudia (Refresh) pindi 
+        function showRetryOnPreview() {
+            const mediaPlayerElem = document.getElementById('preview-media-player');
+            const thumbContainer = document.getElementById('preview-thumb-container');
+            
+            thumbContainer.innerHTML = `❌`;
+            mediaPlayerElem.innerHTML = `
+                <div class="flex items-center justify-between mt-1">
+                    <span class="text-[10px] text-red-400 font-bold">Imeshindikana kutuma!</span>
+                    <button onclick="sendMessage()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] px-2 py-1 rounded-md font-bold flex items-center gap-1 transition">
+                        🔄 Jaribu Tena
+                    </button>
+                </div>
+            `;
+        }
+
+        async function sendMessage() {
+            const inputField = document.getElementById('chat-input');
+            const messageText = inputField.value.trim();
+            const senderName = document.getElementById('userNameDisplay').innerText || "Mteja";
+
+            if (!currentUserPhone) {
+                currentUserPhone = localStorage.getItem('byao_user_phone') || '';
+            }
+
+            if (!currentUserPhone) {
+                showToast("⚠️ Tafadhali ingia tena (Login) ili kutuma ujumbe!");
+                document.getElementById('loginScreen').classList.remove('hidden');
+                return;
+            }
+
+            if (!messageText && !selectedFileObject) {
+                showToast("⚠️ Tafadhali andika ujumbe au chagua faili/picha!");
+                return;
+            }
+
+            // Onyesha Spinner na hali ya kupakia juu kwenye box la preview
+            showLoadingOnPreview("Inapakia faili na ujumbe...");
+            showToast("⏳ Inapakia na kutuma kupitia Supabase...");
+
+            let finalMediaUrl = null;
+
+            // KABATI LA SUPABASE STORAGE (chat-media)
+            if (selectedFileObject) {
+                const fileExt = selectedFileObject.name ? selectedFileObject.name.split('.').pop().toLowerCase() : 'bin';
+                const sanitizedPhone = currentUserPhone.replace(/[^0-9]/g, '');
+                const fileName = `${sanitizedPhone}_${Date.now()}.${fileExt}`;
+                const filePath = `${fileName}`;
+
+                const { data: uploadData, error: uploadError } = await supabaseClient.storage
+                    .from('chat-media')
+                    .upload(filePath, selectedFileObject, {
+                        cacheControl: '3600',
+                        upsert: true,
+                        contentType: selectedFileType || selectedFileObject.type || undefined
+                    });
+
+                if (uploadError) {
+                    console.error("Supabase Database Error:", error);
+showToast("❌ Kosa: " + (error.message || error.details || "Imeshindikana"));
+ // Huruhusu mtumiaji kubonyeza kitufe cha kujaribu tena (Refresh)
+                    return;
+                }
+
+                // Pata Public URL ya faili iliyopakiwa kwenye Bucket
+                const { data: publicUrlData } = supabaseClient.storage
+                    .from('chat-media')
+                    .getPublicUrl(filePath);
+
+                if (publicUrlData && publicUrlData.publicUrl) {
+                    finalMediaUrl = publicUrlData.publicUrl;
+                }
+            }
+
+            const payload = {
+                sender: senderName,
+                sender_phone: currentUserPhone,
+                target_tech_id: currentSelectedTechId || 'GENERAL',
+                text: messageText,
+                media: finalMediaUrl || null,
+                media_type: selectedFileType || null
+            };
+
+            const { error } = await supabaseClient.from('client_chats').insert([payload]);
+
+            if (error) {
+                console.error("Supabase Database Error:", error);
+                showToast("❌ Imeshindikana kuhifadhi ujumbe kwenye database");
+                showRetryOnPreview(); // Huruhusu mtumiaji kujaribu tena endapo database itakataa
+            } else {
+                inputField.value = '';
+                cancelMediaPreview();
+                showToast("🚀 Ujumbe na faili vimetumwa kikamilifu!");
+                loadPrivateChatHistory();
+            }
+        }
+
+        async function loadPrivateChatHistory() {
+            if (!currentUserPhone) return;
+
+            const chatBox = document.getElementById('chat-messages');
+            const { data, error } = await supabaseClient
+                .from('client_chats')
+                .select('*')
+                .eq('sender_phone', currentUserPhone)
+                .order('created_at', { ascending: true });
+
+            chatBox.innerHTML = `
+                <div class="msg incoming">
+                    <b>Chumba cha Faragha (Supabase):</b> Habari! Mazungumzo haya yapo salama.
+                </div>
+            `;
+
+            if (data && data.length > 0) {
+                const activeUser = document.getElementById('userNameDisplay').innerText;
+
+                data.forEach(msg => {
+                    const isOutgoing = msg.sender === activeUser || msg.sender_phone === currentUserPhone;
+                    const msgDiv = document.createElement('div');
+                    msgDiv.className = `msg ${isOutgoing ? 'outgoing' : 'incoming'}`;
+
+                    let content = `<div class="text-[10px] opacity-75 font-bold mb-1">${msg.sender}</div>`;
+                    if (msg.text) content += `<div>${msg.text}</div>`;
+                    
+                    if (msg.media) {
+                        const mType = msg.media_type || '';
+                        if (mType.includes('video') || msg.media.match(/\.(mp4|webm|ogg|mov)$/i)) {
+                            content += `<div class="mt-1"><video src="${msg.media}" controls playsinline class="rounded-lg max-h-48 w-full object-cover"></video></div>`;
+                        } else if (mType.includes('audio') || msg.media.match(/\.(webm|mp3|wav|ogg)$/i)) {
+                            content += `<div class="mt-1"><audio src="${msg.media}" controls class="w-full"></audio></div>`;
+                        } else if (mType.includes('image') || msg.media.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+                            content += `<div class="mt-1"><img src="${msg.media}" class="rounded-lg max-h-48 w-full object-cover"></div>`;
+                        } else {
+                            content += `<div class="mt-1"><a href="${msg.media}" target="_blank" class="text-xs underline text-blue-400">📁 Pakua Faili Lililotumwa</a></div>`;
+                        }
+                    }
+
+                    msgDiv.innerHTML = content;
+                    chatBox.appendChild(msgDiv);
+                });
+            }
+
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+
+        function calculatePrice() {
+            const currSelect = document.getElementById('est-currency');
+            const selectedOpt = currSelect.options[currSelect.selectedIndex];
+            const rate = parseFloat(selectedOpt.getAttribute('data-rate')) || 1;
+            const symbol = selectedOpt.getAttribute('data-symbol') || 'TZS';
+
+            const phoneVal = parseFloat(document.getElementById('est-phone').value) || 0;
+            const probVal = parseFloat(document.getElementById('est-problem').value) || 0;
+
+            const totalTsh = phoneVal + probVal;
+            const converted = totalTsh * rate;
+
+            document.getElementById('est-result').innerText = `Makisio ya Bei: ${symbol} ${converted.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
+        }
+
+        function renderSpareCatalogue() {
+            const container = document.getElementById('spareCatalogueContainer');
+            if (!container) return;
+            container.innerHTML = '';
+
+            dbMerchantProducts.forEach(sp => {
+                const card = document.createElement('div');
+                card.className = "bg-[#050b18] border border-slate-800 p-3 rounded-xl text-xs text-white space-y-1";
+                card.innerHTML = `
+                    <h5 class="font-bold text-[#00e5ff] text-[11px]">${sp.jina}</h5>
+                    <div class="flex justify-between items-center text-[10px]">
+                        <span class="text-emerald-400 font-bold">Tsh ${(sp.bei || 0).toLocaleString()}</span>
+                        <span class="text-slate-400">Stock: ${sp.stock || 0}</span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderMyReceipts() {
+            const container = document.getElementById('myReceiptsContainer');
+            if (!container) return;
+            container.innerHTML = '';
+
+            dbSimu.forEach(s => {
+                const el = document.createElement('div');
+                el.className = "bg-[#050b18] p-3 rounded-xl border border-slate-800 text-[11px] flex justify-between items-center";
+                el.innerHTML = `
+                    <div>
+                        <div class="font-bold text-[#00e5ff]">${s.id}</div>
+                        <div class="text-slate-400 text-[9px]">${s.brand} ${s.model}</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-bold text-white">Tsh ${(s.bei || 0).toLocaleString()}</div>
+                        <span class="text-emerald-400 text-[9px]">Imelipwa ✓</span>
+                    </div>
+                `;
+                container.appendChild(el);
+            });
+        }
+
+        function submitClientFeedback() {
+            showToast("✅ Asante sana! Maoni yako yamewasilishwa kikamilifu.");
+            document.getElementById('clientFeedbackComment').value = '';
+        }
+
+        function requestPickupService() {
+            const loc = document.getElementById('pickupLocation').value.trim();
+            if (!loc) {
+                showToast("⚠️ Weka eneo lako kwanza!");
+                return;
+            }
+            showToast("🚀 Ombi lako la kuchukuliwa simu limetumwa kwa fundi aliye karibu nawe!");
+            document.getElementById('pickupLocation').value = '';
+        }
+    </script>
+<script src="js/language.js"></script>
+<script src="js/supabase.js"></script>
+<script src="js/profile.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/notifications.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

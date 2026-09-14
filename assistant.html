@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html lang="sw" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BYAO Mobile & Computer Elite Master Suite - Professional Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        deepObsidian: '#030712',
+                        panelCharcoal: '#0b0f19',
+                        eliteGold: '#f59e0b',
+                        cyberCyan: '#06b6d4',
+                        neonViolet: '#8b5cf6'
+                    }
+                }
+            }
+        }
+    </script>
+<script src="js/supabase.js"></script>
+<script src="js/profile.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/notifications.js"></script>
+<script src="js/admin.js"></script>
+    <style>
+        .elite-glass { background: rgba(11, 15, 25, 0.92); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #030712; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1f2937; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #374151; }
+    </style>
+</head>
+<body class="bg-deepObsidian text-slate-200 min-h-screen w-full flex flex-col font-sans overflow-x-hidden m-0 p-0 selection:bg-cyan-500 selection:text-black">
+
+    <!-- Header Kuu ya Kitaalamu -->
+    <header class="w-full elite-glass border-b border-slate-800/80 px-6 py-4 flex items-center justify-between sticky top-0 z-50 shadow-2xl">
+        <div class="flex items-center space-x-4">
+            <span class="bg-gradient-to-r from-cyan-500 to-violet-600 text-black text-xs font-black px-3.5 py-1.5 rounded-xl uppercase tracking-widest shadow-lg">BYAO ELITE</span>
+            <div>
+                <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-white flex items-center space-x-2.5">
+                    <span>BYAO MOBILE SOLUTION - ENTERPRISE MASTER SUITE</span>
+                    <span class="w-2.5 h-2.5 bg-cyan-400 rounded-full animate-pulse shadow-[0_0_12px_#06b6d4]"></span>
+                </h1>
+                <p class="text-[11px] text-slate-400 font-mono tracking-wide">Cloud Ecosystem (Airtable, Make, Softr) &bull; 200+ Engineering Modules</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-3">
+            <button onclick="loadQuickStats()" class="hidden sm:block bg-slate-900 border border-slate-700/60 text-cyan-400 hover:text-white text-xs px-3.5 py-2 rounded-xl transition font-mono">Takwimu</button>
+            <button onclick="clearChatScreen()" class="bg-slate-900 border border-slate-700/60 text-slate-300 hover:text-white text-xs px-3.5 py-2 rounded-xl transition font-mono">Safisha Skrini</button>
+        </div>
+    </header>
+
+    <!-- Sehemu Kuu ya Mazungumzo na Utatuzi -->
+    <main class="flex-1 w-full max-w-5xl mx-auto p-4 sm:p-6 flex flex-col space-y-6 pb-32">
+        
+        <!-- Ujumbe wa Kukaribisha wa Kitaalamu -->
+        <div class="flex items-start space-x-4">
+            <div class="w-9 h-9 rounded-2xl bg-gradient-to-br from-cyan-500 to-violet-600 flex items-center justify-center text-black font-black text-xs shrink-0 shadow-lg shadow-cyan-500/20">AI</div>
+            <div class="bg-panelCharcoal border border-slate-800/90 p-5 rounded-2xl rounded-tl-none text-xs sm:text-sm text-slate-300 shadow-2xl max-w-[88%] leading-relaxed font-sans space-y-2">
+                <p class="text-cyan-400 font-bold tracking-wide">ENTERPRISE MASTER SUITE PRO MAX IMEWASHWA</p>
+                <p>Habari mkuu! Karibu kwenye mfumo mkuu wa Byao Mobile Solution. Hifadhidata yetu sasa imesheheni moduli zaidi ya 200+ zinazojumuisha mifumo ya wingu, urekebishaji wa FRP/Flashing, na uchambuzi wa kina wa vifaa mbalimbali vya simu na kompyuta.</p>
+                <p class="text-slate-400">Tafadhali andika neno kuu au tatizo lako (mfano: samsung, tecno, infinix, iphone, hp, dell, macbook, frp, wifi, sfc) ili nikupe ripoti ya kitaalamu ya papo hapo!</p>
+            </div>
+        </div>
+
+         <!-- Eneo la Mazungumzo Yanayotiririka -->
+        <div id="chatHistory" class="flex flex-col space-y-5"></div>
+    </main>
+
+    <!-- Sehemu ya Kuandikia Ujumbe -->
+    <div class="fixed bottom-0 inset-x-0 elite-glass border-t border-slate-800/80 p-3 sm:p-5 z-40 shadow-2xl">
+        <div class="max-w-5xl mx-auto flex items-center space-x-3">
+            <input type="text" id="userInputQuery" placeholder="Andika neno kuu la moduli au tatizo (Mfano: samsung, tecno, iphone, hp, dell, frp, wifi)..." class="flex-1 bg-slate-950/90 border border-slate-800/90 rounded-2xl px-5 py-3.5 text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 shadow-inner font-sans transition">
+            <button onclick="sendUserQuery()" class="bg-gradient-to-r from-cyan-500 to-violet-600 hover:from-cyan-400 hover:to-violet-500 text-black font-extrabold px-6 py-3.5 rounded-2xl text-xs uppercase tracking-wider transition shadow-lg shadow-cyan-500/20 cursor-pointer shrink-0 font-sans">Tuma Ujumbe</button>
+        </div>
+    </div>
+
+    <!-- JavaScript Engine ya Hifadhidata Iliyopanuliwa (200+ Modules) -->
+    <script>
+        const masterDatabase = {
+            // Moduli za Awali (1 - 73)
+            "maji": "RIPOTI: Simu iliyoingia kwenye maji. Zima mara moja, ondoa SIM, kausha kwa Silica Gel na upeleke kwa fundi kusafisha bodi kwa Isopropyl Alcohol.",
+            "ganda": "RIPOTI: Simu inayoganda. Futa nafasi ya hifadhi, fanya Force Reboot, futa akiba kwenye Recovery Mode (Wipe Cache Partition).",
+            "bluu": "RIPOTI: Skrini ya bluu kwenye kompyuta (BSOD). Safisha RAM, tumia Safe Mode, au fanya amri ya sfc /scannow kupitia Command Prompt.",
+            "moto": "RIPOTI: Joto kupita kiasi. Punguza matumizi wakati wa kuchaji, safisha vumbi kwenye feni za kompyuta, au badilisha betri iliyovimba.",
+            "chaji": "RIPOTI: Simu haichaji vizuri. Safisha tundu la chaji kwa uangalifu, jaribu kebo nyingine, au kagua pini za bodi ndogo ya nishati.",
+            "kioo": "RIPOTI: Kioo kimepasuka au hakionyeshi picha. Suluhu ni kubadilisha kioo kipya au kupima kupitia HDMI kwa upande wa kompyuta.",
+            "sauti": "RIPOTI: Spika inatoa sauti ya ukwaruzo. Safisha matundu kwa brashi kavu, sasisha madereva ya sauti, au badilisha spika mpya.",
+            "virusi": "RIPOTI: Maambukizi ya virusi. Weka programu salama ya Antivirus, futa programu tatanishi, au sakinisha upya mfumo (OS).",
+            "nenosiri": "RIPOTI: Kusahau nenosiri au FRP. Tumia Recovery Mode kufanya Hard Reset au tumia zana za kisheria za ufundi kurejesha simu.",
+            "projector": "RIPOTI: Projector haiwaki au haina mwanga. Badilisha taa iliyofikisha kikomo, safisha vichungi vya hewa, au kagua bodi ya ballast.",
+            "router": "RIPOTI: Router ya Wi-Fi haina mtandao. Fanya Hard Reset kwa sekunde 10, kagua salio la laini, au sasisha Firmware.",
+            "kamera": "RIPOTI: Kamera haiwaki au ina uchafu. Safisha lenzi, futa akiba ya programu ya kamera, au kagua moduli ya ndani.",
+            "network": "RIPOTI: Simu haina mtandao au haisomi SIM Card. Jaribu laini nyingine, weka APN sahihi, au safisha pini za kusomea SIM.",
+            "mic": "RIPOTI: Kipaza sauti hakisikiki wakati wa mazungumzo. Safisha tundu dogo la chini au badilisha Mic mpya.",
+            "touch": "RIPOTI: Kioo cha mguso hakisikii sehemu fulani. Ondoa kioo cha ziada cha ulinzi (screen protector) au fanya Force Restart.",
+            "bootloop": "RIPOTI: Simu imekwama kwenye nembo. Fanya Factory Reset kupitia Recovery Mode au fanya Flashing ya mfumo mpya.",
+            "bluetooth": "RIPOTI: Bluetooth au Wi-Fi haziunganishi. Fanya Reset Network Settings au zima na uwashe Flight Mode.",
+            "keyboard": "RIPOTI: Kibodi ya kompyuta haifanyi kazi. Safisha chini ya vitufe kwa hewa ya kisukuma au kagua utepe wake kwenye bodi.",
+            "hdd": "RIPOTI: Kompyuta haisomi Hard Disk au SSD. Kagua mipangilio ya BIOS, badilisha tundu la kuunganisha, auweka SSD mpya.",
+            "battery": "RIPOTI: Betri ya kompyuta haidumu. Fanya Battery Calibration au badilisha betri mpya ya asili.",
+            "port": "RIPOTI: Tundu la USB la kompyuta halisomi vifaa. Sasisha USB Controllers kupitia Device Manager au nyoosha pini zilizopinda.",
+            "usb": "RIPOTI: Simu haisomi kompyuta. Badilisha kebo iwe ya kuleta data, chagua MTP mode, au safisha tundu la kuchajia.",
+            "sensor": "RIPOTI: Proximity sensor haizimi skrini. Safisha eneo la juu karibu na kamera ya mbele au ondoa kioo cha kinga kinachoziba.",
+            "nfc": "RIPOTI: NFC haisomi kadi. Hakikisha kifuniko cha simu hakina chuma kinachozuia mawimbi.",
+            "restart": "RIPOTI: Simu inajizima na kuwaka yenyewe. Kagua kitufe cha Power kisibane au badilisha betri iliyochoka.",
+            "imei": "RIPOTI: Namba ya IMEI imepotea (Null/Unknown). Rejesha kupitia EFS backup au tumia zana za kisheria za ufundi.",
+            "speaker": "RIPOTI: Spika haisikiki kabisa. Pima kwa multimeter, badilisha spika, au kagua Audio IC kwenye bodi.",
+            "water": "RIPOTI: Kioo kina alama za maji au madoa (LCD Bleeding). Kausha au badilisha kioo kizima.",
+            "overclock": "RIPOTI: Kompyuta inajizima kwenye programu nzito. Weka Thermal Paste mpya kwenye CPU na safisha vumbi.",
+            "powerbutton": "RIPOTI: Kitufe cha Power hakifanyi kazi. Safisha swichi ya ndani au ichomekee mpya.",
+            "sdcard": "RIPOTI: Kadi ya kumbukumbu haisomeki. Fanya Format kupitia kompyuta au nunua kadi mpya.",
+            "headphone": "RIPOTI: Tundu la masikioni halisikiki. Safisha vumbi ndani ya tundu au badilisha jack port.",
+            "brightness": "RIPOTI: Mwanga wa kioo umepotea. Kagua Display Light IC au angalia kwa tochi kuona kama picha ipo.",
+            "hotspot": "RIPOTI: Hotspot haitoi mtandao. Fanya Network Reset au zima na uwashe simu.",
+            "simlock": "RIPOTI: Simu imefungwa mtandao maalum (Carrier Lock). Tumia Unlock Code au Box za ufundi.",
+            "stucklogo": "RIPOTI: Kompyuta imekwama kwenye nembo ya Windows. Fanya Startup Repair au sakinisha Windows mpya.",
+            "touchpad": "RIPOTI: Panya ya kompyuta (Touchpad) haifanyi kazi. Washa kupitia Fn keys au sasisha driver.",
+            "chargeroverheat": "RIPOTI: Kichwa cha chaji kinachemka sana. Tumia chaji halisi yenye viwango sahihi.",
+            "motherboard": "RIPOTI: Kompyuta haiwaki kabisa. Pima Power Supply au kagua Power IC kwenye bodi kuu.",
+            "simtray": "RIPOTI: Tundu la SIM card limevunjika ndani. Ondoa vipande kwa uangalifu na ubadilishe sim tray.",
+            "appcrash": "RIPOTI: Programu inajifunga yenyewe. Futa akiba (Cache) au sasisha toleo jipya.",
+            "antivirus": "RIPOTI: Antivirus haifanyi kazi. Sasisha toleo lake aufanya uchunguzi kwenye Safe Mode.",
+            "displaylines": "RIPOTI: Kioo kina mistari ya wima. Kagua utepe wa kioo au badilisha kioo kipya.",
+            "microsd": "RIPOTI: Kadi ya kumbukumbu inasema Corrupted. Fanya Format au badilisha.",
+            "overheatpc": "RIPOTI: Kompyuta inatoa kelele kubwa na kuzima. Safisha feni na uweke mafuta.",
+            "networkreset": "RIPOTI: Hakuna mtandao wa data. Rejesha APN rasmi za mtandao wako.",
+            "bluetoothpc": "RIPOTI: Kompyuta haioni Bluetooth. Washa Bluetooth Services kwenye Windows na usasishe driver.",
+            "simpin": "RIPOTI: Simu inataka nenosiri la SIM PIN. Weka 0000/1234 au tumia PUK code.",
+            "screenrecording": "RIPOTI: Screen recording haifanyi kazi. Achia nafasi ya kutosha kwenye hifadhi.",
+            "autofluorescence": "RIPOTI: Mwanga unajibadilisha wenyewe. Safisha kihisi cha mwangaza au uzime Auto Brightness.",
+            "freezescreen": "RIPOTI: Kompyuta imekwama kabisa. Fanya Hard Shutdown au tumia Task Manager.",
+            "vibration": "RIPOTI: Mtetemeko wa simu haufanyi kazi. Kagua miunganisho ya vibration motor.",
+            "frontcamera": "RIPOTI: Kamera ya mbele ina ukungu. Safisha lenzi ya ndani kwa mtaalamu.",
+            "simnetwork": "RIPOTI: Mnara upo lakini simu haipigi. Weka Auto Network Selection.",
+            "computernoise": "RIPOTI: Kompyuta inatoa sauti ya kusaga. Hamisha data na uweke SSD.",
+            "screenrot": "RIPOTI: Auto-rotate haifanyi kazi. Washa kwenye menyu ya haraka aufanya Restart.",
+            "gpucrash": "RIPOTI: Kadi ya picha imeshindwa (GPU). Sasisha Graphics Driver au punguza michoro.",
+            "waterdamageboard": "RIPOTI: Bodi ina harufu ya kuteketea baada ya maji. Tenganisha betri na safisha kwa Ultrasonic.",
+            "poweric": "RIPOTI: Simu haiwaki wala haichaji (Dead Power IC). Badilisha chipu kupitia BGA machine.",
+            "wifiip": "RIPOTI: Kompyuta ina IP configuration error. Weka DHCP otomatiki na uweke winsock reset.",
+            "microphoneraw": "RIPOTI: Sauti inasikika kwa mbali sana. Weka mpira wa mic sawa kwenye nafasi yake.",
+            "camerablack": "RIPOTI: Kamera inatoa skrini nyeusi. Futa programu za nje zinazozuia ruhusa.",
+            "simrejected": "RIPOTI: Sim card rejected. Badilisha laini au fanya Network Unlock.",
+            "computerexplorer": "RIPOTI: Windows Explorer imekwama. Fanya Restart kupitia Task Manager.",
+            "batterycalibration": "RIPOTI: Betri inashuka kwa kasi. Fanya full discharge na uchaji hadi 100%.",
+            "headsetmic": "RIPOTI: Mic ya masikioni haisikiki. Futa ncha ya chuma au jaribu earphone nyingine.",
+            "bluetoothpairing": "RIPOTI: Pairing failed. Futa 'Forget Device' na utafute upya.",
+            "screenburn": "RIPOTI: Alama za programu zimechapishwa kwenye kioo (Screen Burn-in). Tumia Dark Mode au badilisha kioo.",
+            "simpinblock": "RIPOTI: SIM kadi imefungwa na PUK. Wasiliana na huduma kwa wateja kupata PUK.",
+            "computerrandomrestart": "RIPOTI: Kompyuta inajizima kiholela. Safisha RAM na kagua joto la CPU.",
+            "wifidisconnect": "RIPOTI: Wi-Fi inakatika katika. Fanya 'Forget Network' na usogee karibu na router.",
+            "storageslow": "RIPOTI: Hifadhi imejaa na simu inatembea polepole. Futa faili taka na kashe.",
+            "screenreplacementerror": "RIPOTI: Kioo kipya hakifanyi kazi. Kagua utepe au sasisha toleo la mfumo.",
+            "simtoolkitmissing": "RIPOTI: STK imepotea. Washa kupitia App Manager aubadilishe tundu.",
+            "computernoimage": "RIPOTI: Kompyuta inawaka lakini kioo kiko cheusi. Safisha RAM au jaribu skrini ya nje.",
+            "microphonecrack": "RIPOTI: Sauti ya mic ina mkwaju. Rekebisha mkao wa mic kwenye bodi.",
+            "earpiecemuffled": "RIPOTI: Kisikiko cha juu chazidiwa na vumbi. Safisha wavu wake.",
+
+            "samsung": "RIPOTI YA KIELEKTRONIKI: SIMU ZA SAMSUNG - UTATUZI WA ODIN FLASHING NA FRP\n\n• Hitilafu Kuu:\nKukwama kwenye Odin Mode, hitilafu za Knox security, na kushindwa kuwasha baada ya sasisho.\n• Suluhu:\n1. Tumia programu rasmi ya Odin kuweka mfumo (Stock Firmware) unaolingana na nchi na modeli kamili.\n2. Kwa upande wa FRP, tumia zana za kisasa za Bypass kulingana na toleo la Android la simu hiyo.",
+            
+            "tecno": "RIPOTI YA KIELEKTRONIKI: SIMU ZA TECNO - UTATUZI WA DAEMON NA BOOTLOOP\n\n• Hitilafu Kuu:\nSimu kujizima yenyewe, kukwama kwenye nembo ya Tecno, na kushindwa kusoma MTK bootrom.\n• Suluhu:\n1. Tumia SP Flash Tool pamoja na faili sahihi la Scatter kwa ajili ya simu za MediaTek.\n2. Bonyeza vitufe vya sauti pamoja wakati wa kuunganisha kwenye kompyuta kusoma USB.",
+            
+            "infinix": "RIPOTI YA KIELEKTRONIKI: SIMU ZA INFINIX - KUREJESHA MTANDAO NA IMEI\n\n• Hitilafu Kuu:\nKupotea kwa mtandao, ujumbe wa NVRAM Warning, na simu kutowaka baada ya jaribio la kuweka root.\n• Suluhu:\n1. Andika upya faili za NVRAM na IMEI kwa kufuata sheria za kiufundi.\n2. Safisha na fanya Hard Reset kupitia XOS Recovery.",
+            
+            "itel": "RIPOTI YA KIELEKTRONIKI: SIMU ZA ITEL - KUFUNGUA FRP NA KUSAFISHA BODI\n\n• Hitilafu Kuu:\nKushindwa kuwasha baada ya kuingia maji madogo na kujifunga akaunti ya Google.\n• Suluhu:\n1. Fanya test point kwenye bodi kwa ajili ya simu za chipset za Spreadtrum (Unisoc).\n2. Tumia Miracle Box au zana huru za FRP bypass.",
+            
+            "iphone": "RIPOTI YA KIELEKTRONIKI: APPLE IPHONE - UTATUZI WA ITUNES ERROR NA ACTIVATION LOCK\n\n• Hitilafu Kuu:\nKukwama kwenye Apple Logo (Recovery Mode), Errors za iTunes wakati wa kuweka iOS, na iCloud Activation Lock.\n• Suluhu:\n1. Unganisha na kompyuta ukitumia iTunes au 3uTools kisha fanya Flash au Update rasmi.\n2. Hakikisha unatumia nenosiri sahihi la Apple ID au nyaraka za uthibitisho wa umiliki.",
+            
+            "hp": "RIPOTI YA KIELEKTRONIKI: KOMPYUTA ZA HP - BIOS RECOVERY NA POWER ISSUES\n\n• Hitilafu Kuu:\nKompyuta kuwaka taa za blinking kwenye Caps Lock, kutotoa picha, na hitilafu za BIOS.\n• Suluhu:\n1. Hesabu idadi ya milipuko au mianga ya taa ya Caps Lock kubaini namba ya makosa ya HP.\n2. Tumia mchanganyiko wa Windows + B kuamsha mfumo wa dharura wa BIOS Recovery.",
+            
+            "dell": "RIPOTI YA KIELEKTRONIKI: KOMPYUTA ZA DELL - DIAGNOSTICS NA BATTERY FAULTS\n\n• Hitilafu Kuu:\nKutoa taa za tahadhari za rangi ya chungwa na nyeupe (Diagnostic LED codes), na kushindwa kutambua chaji halisi.\n• Suluhu:\n1. Bonyeza kitufe cha Fn wakati wa kuwasha ili kuanzisha ePSA Diagnostic test.\n2. Hakikisha adapta ya Dell inasomwa vizuri kwenye BIOS ili kuepuka kupungua kwa kasi ya utendaji.",
+            
+            "lenovo": "RIPOTI YA KIELEKTRONIKI: KOMPYUTA ZA LENOVO - ONEKEY RECOVERY NA THRMAL ISSUES\n\n• Hitilafu Kuu:\nKupata joto kali wakati wa kazi nzito na kushindwa kuingia kwenye mfumo wa Windows.\n• Suluhu:\n1. Tumia kitufe cha Nova (kitufe kidogo cha pembeni) kuleta menyu ya uokoaji na kuweka mfumo upya.\n2. Safisha njia za kupitishia hewa na uweke mafuta mapya ya CPU.",
+            
+            "asus": "RIPOTI YA KIELEKTRONIKI: KOMPYUTA ZA ASUS - MYASUS DRIVERS NA BOOT MENU\n\n• Hitilafu Kuu:\nKukosa madereva sahihi ya sauti na picha baada ya kusakinisha Windows mpya.\n• Suluhu:\n1. Tumia programu ya MyASUS kupakua madereva halisi.\n2. Tumia kitufe cha F2 au Esc wakati wa kuwasha ili kuchagua kifaa cha kuwasha (Boot Menu).",
+            
+            "macbook": "RIPOTI YA KIELEKTRONIKI: APPLE MACBOOK - SMC / NVRAM RESET NA MACOS RECOVERY\n\n• Hitilafu Kuu:\nKushindwa kuwaka, feni kwenda kwa kasi kubwa ghafla, na hitilafu za kurejesha mfumo wa macOS.\n• Suluhu:\n1. Fanya SMC Reset au NVRAM Reset kulingana na aina ya kichakataji cha Mac (Intel au Apple Silicon M1/M2/M3).\n2. Washa mashine huku ukishikilia Command + R ili kuingia kwenye Recovery Mode.",
+            
+            "xiaomi": "RIPOTI YA KIELEKTRONIKI: SIMU ZA XIAOMI / REDMI - MI FLASH NA BOOTLOADER\n\n• Hitilafu Kuu:\nKukwama kwenye Fastboot mode, kufungwa kwa Bootloader, na ujumbe wa 'System has been destroyed'.\n• Suluhu:\n1. Tumia Mi Flash Tool pamoja na rasmi Fastboot ROM.\n2. Fungua Bootloader kupitia akaunti iliyosajiliwa rasmi kwenye vifaa vya Xiaomi.",
+            
+            "huawei": "RIPOTI YA KIELEKTRONIKI: SIMU ZA HUAWEI - HISUITE NA GOOGLE SERVICES\n\n• Hitilafu Kuu:\nKukosa huduma za Google Play na kushindwa kuwasha baada ya hitilafu za mfumo wa EMUI.\n• Suluhu:\n1. Tumia programu ya HiSuite kwenye kompyuta kurejesha mfumo rasmi.\n2. Tumia mbinu za kisheria kusanidi nafasi za hifadhi za AppGallery.",
+            
+            "oppo": "RIPOTI YA KIELEKTRONIKI: SIMU ZA OPPO - MSM DOWNLOAD TOOL NA COLOROS\n\n• Hitilafu Kuu:\nSimu kujifunga kabisa (Brick), kushindwa kufanya Hard Reset bila nenosiri la kampuni.\n• Suluhu:\n1. Tumia MSM Download Tool pamoja na akaunti rasmi ya ufundi.\n2. Tumia Recovery Mode kufuta data zote za mtumiaji.",
+            
+            "vivo": "RIPOTI YA KIELEKTRONIKI: SIMU ZA VIVO - FASTBOOT FLASHING NA FRP\n\n• Hitilafu Kuu:\nKukwama kwenye ulinzi wa Google baada ya kufanya Factory Reset.\n• Suluhu:\n1. Tumia zana maalum za kisheria za MTK au Qualcomm zinazounga mkono chapa ya Vivo.\n2. Washa upya simu kupitia mchanganyiko wa vitufe.",
+            
+            "acer": "RIPOTI YA KIELEKTRONIKI: KOMPYUTA ZA ACER - BIOS PASSWORD NA BOOT PRIORITY\n\n• Hitilafu Kuu:\nKushindwa kusoma USB ya kuweka Windows na kufungwa kwa nenosiri la BIOS.\n• Suluhu:\n1. Washa F12 Boot Menu kupitia mipangilio ya BIOS (Main Tab).\n2. Ondoa betri ya CMOS kwa dakika tano kusafisha nenosiri la BIOS ikiwa limehaulika.",
+
+            "toshiba": "RIPOTI YA KIELEKTRONIKI: KOMPYUTA ZA TOSHIBA - SATELLITE DRIVERS NA HARD DISK ERROR\n\n• Hitilafu Kuu:\nKompyuta kuganda na kutoa sauti ya mlio kwenye Hard Disk ya zamani.\n• Suluhu:\n1. Badilisha HDD ya zamani iwe SSD ya kisasa.\n2. Sakinisha upya madereva rasmi ya Toshiba.",
+
+            "msi": "RIPOTI YA KIELEKTRONIKI: KOMPYUTA ZA MICROTAR (MSI) GAMING - DRAGON CENTER FAULTS\n\n• Hitilafu Kuu:\nJoto kali wakati wa michezo mizito na feni kushindwa kujitawala vizuri.\n• Suluhu:\n1. Tumia programu ya MSI Center au Dragon Center kudhibiti kasi ya feni na mfumo wa upozeaji.\n2. Kagua na kusafisha vumbi kwenye mfumo wa heatsink.",
+
+            "nokia": "RIPOTI YA KIELEKTRONIKI: SIMU ZA NOKIA ANDROID - STOCK ROM NA HARD RESET\n\n• Hitilafu Kuu:\nKukwama kwenye Android One logo na kushindwa kufanya wipe data.\n• Suluhu:\n1. Tumia mchanganyiko wa vitufe vya Power na Volume Down kuingia Recovery Mode.\n2. Tumia zana za ufundi kusakinisha rasmi Stock ROM.",
+
+            "googlepixel": "RIPOTI YA KIELEKTRONIKI: GOOGLE PIXEL - ADB / FASTBOOT FLASHING\n\n• Hitilafu Kuu:\nKushindwa kupata sasisho la mfumo na kukwama kwenye Bootloader.\n• Suluhu:\n1. Tumia Android Platform Tools (ADB/Fastboot) kupitia kompyuta kuweka Factory Image rasmi.\n2. Fungua Bootloader kwa urahisi kupitia Developer Options.",
+
+            "realme": "RIPOTI YA KIELEKTRONIKI: SIMU ZA REALME - REALME UI RECOVERY\n\n• Hitilafu Kuu:\nKushindwa kufungua programu na makosa ya kiufundi kwenye Realme UI.\n• Suluhu:\n1. Futa akiba kupitia Recovery Mode.\n2. Tumia zana za kisasa za MTK/Qualcomm flash tool kurejesha mfumo.",
+
+            "smarttv": "RIPOTI YA KIELEKTRONIKI: SMART TV - ANDROID TV KUKWAMA NA KUKOSA INTANETI\n\n• Hitilafu Kuu:\nTelevisheni ya kisasa kukwama kwenye nembo, kushindwa kuunganisha Wi-Fi ya nyumbani, au kukosa nafasi ya hifadhi.\n• Suluhu:\n1. Chomoa umeme kwa dakika tano kisha urudishe.\n2. Fanya Factory Reset kupitia Settings au Recovery Menu ya TV.",
+
+            "printer": "RIPOTI YA KIELEKTRONIKI: MASHINE YA KUCHAPISHA (PRINTER) - HP / EPSON ERROR\n\n• Hitilafu Kuu:\nPrinta kukataa kuchapisha, taa kuwaka nyekundu, au wino kuisha kwenye vichwa vya kuchapishia.\n• Suluhu:\n1. Kagua kama kuna karatasi iliyokwama ndani ya rollers.\n2. Endesha Head Cleaning kupitia kompyuta au uendeshe Print Head Alignment.",
+
+            "scanner": "RIPOTI YA KIELEKTRONIKI: KISAKATA NYARAKA (SCANNER) - KUSHINDWA KUSOMA KARATASI\n\n• Hitilafu Kuu:\nSkana haisomi picha au inatoa ujumbe wa 'Scanner not found' kwenye kompyuta.\n• Suluhu:\n1. Sasisha madereva ya WIA / TWAIN kupitia Device Manager.\n2. Kagua miunganisho ya kebo ya USB na nishati.",
+
+            "ethernet": "RIPOTI YA KIELEKTRONIKI: MTANDAO WA WAYA (ETHERNET / LAN) - KUSHINDWA KUSOMA INTANETI\n\n• Hitilafu Kuu:\nTaa za njano na kijani kwenye tundu la LAN hazimuliki, ujumbe wa 'Unidentified Network'.\n• Suluhu:\n1. Badilisha kebo ya RJ45 au kagua miunganisho kwenye Switch/Router.\n2. Tumia amri ya 'ipconfig /renew' kwenye Command Prompt.",
+
+            "ramupgrade": "RIPOTI YA KIELEKTRONIKI: KUONGEZA NA KUPIMA RAM YA KOMPYUTA\n\n• Hitilafu Kuu:\nKompyuta kuwa nzito kutokana na ukosefu wa kutosha wa kumbukumbu ya muda.\n• Suluhu:\n1. Nunua RAM inayolingana na kasi (MHz) na kizazi cha ubao wako wa mama (DDR3, DDR4, au DDR5).\n2. Safisha sehemu za dhahabu kabla ya kuchomeka.",
+
+            "ssdupgrade": "RIPOTI YA KIELEKTRONIKI: KUBADILISHA HDD NA KUWEKA SSD KWENYE KOMPYUTA\n\n• Hitilafu Kuu:\nKompyuta kuchukua muda mrefu kuwaka na kufungua programu.\n• Suluhu:\n1. Weka SSD ya aina ya SATA au M.2 NVMe kulingana na uwezo wa kompyuta yako.\n2. Hamisha mfumo (Clone) au sakinisha Windows mpya kwa kasi ya ajabu.",
+
+            "biosupdate": "RIPOTI YA KIELEKTRONIKI: KUSASISHA BIOS YA KOMPYUTA (BIOS FLASHING)\n\n• Hitilafu Kuu:\nUbao wa mama kushindwa kutambua vifaa vipya au vichakataji vya kisasa.\n• Suluhu:\n1. Pakua toleo rasmi la BIOS kutoka kwa mtengenezaji (HP, Dell, Asus, n.k.).\n2. Tumia USB maalum kufanya update huku ukihakikisha hakuna kukatika kwa umeme.",
+
+            "cmosbattery": "RIPOTI YA KIELEKTRONIKI: BETRI YA CMOS YA KOMPYUTA - KUPOTEA KWA MUDA NA TAREHE\n\n• Hitilafu Kuu:\nKompyuta kuweka upya tarehe na saa kila inapozimwa na kuwashwa upya.\n• Suluhu:\n1. Fungua kompyuta na ubadilishe betri ndogo ya saa (CR2032).\n2. Weka upya mipangilio ya tarehe kwenye BIOS.",
+
+            "thermalpaste": "RIPOTI YA KIELEKTRONIKI: KUBADILISHA MAFUTA YA KUPUNGUZA JOTO (THERMAL PASTE)\n\n• Hitilafu Kuu:\nKompyuta kupata joto kali na kuzima yenyewe wakati wa kazi.\n• Suluhu:\n1. Safisha kabisa mafuta ya zamani kwenye CPU na GPU kwa Isopropyl alcohol.\n2. Weka mafuta mapya yenye kiwango kizuri cha kupitisha joto (High thermal conductivity).",
+
+            "airtable": "RIPOTI YA KIELEKTRONIKI: AIRTABLE CLOUD DATABASE & INTEGRATION\n\n• Chanzo na Athari za Kiafya na Kiteknolojia:\nAirtable inatumika kama uti wa mgongo wa kuhifadhi data za moduli zako. Kukosekana kwa muunganisho sahihi wa API au ukomo wa maombi husababisha kukwama kwa mtiririko.", 
+          "frpsamsung": "RIPOTI YA KIELEKTRONIKI: KUPINGA NA KUVUNJA ULINZI WA GOOGLE (SAMSUNG FRP BYPASS)\n\n" +
+                      "• Chanzo na Athari:\n" +
+                      "Simu kujifunga baada ya kufanya Hard Reset kutokana na usalama wa akaunti ya awali ya Google.\n\n" +
+                      "• Suluhu na Hatua za Kitaalamu:\n" +
+                      "1. Kutumia Code ya Siri: Tumia njia ya *#0*# kupitia Emergency Call ili kufungua dirisha la USB Debugging.\n" +
+                      "2. Zana za Kompyuta: Tumia programu rasmi za ufundi kusoma na kuondoa ulinzi huo kupitia bandari ya USB.",
+
+        "hardresettecno": "RIPOTI YA KIELEKTRONIKI: KUFANYA HARD RESET KWA SIMU ZA TECNO NA INFINIX\n\n" +
+                          "• Chanzo na Athari:\n" +
+                          "Simu kusahau nenosiri au kukwama kwenye mfumo.\n\n" +
+                          "• Suluhu na Hatua za Kitaalamu:\n" +
+                          "1. Kuzima Simu: Hakikisha simu imezimwa kabisa.\n" +
+                          "2. Mchanganyiko wa Vifungo: Bonyeza kitufe cha kuwasha na kitufe cha kuongeza sauti kwa pamoja hadi nembo itokee, kisha chagua 'Wipe Data/Factory Reset'.",
+
+        "secretcodesandroid": "RIPOTI YA KIELEKTRONIKI: MATUMIZI YA MISIMBO YA SIRI YA ANDROID (SECRET CODES)\n\n" +
+                              "• Chanzo na Athari:\n" +
+                              "Kupima ubora wa vifaa vya ndani (Hardware Testing) bila kufungua simu.\n\n" +
+                              "• Suluhu na Hatua za Kitaalamu:\n" +
+                              "1. *#0*# - Jaribio la jumla la skrini, rangi, na mtandao kwa simu za Samsung.\n" +
+                              "2. *#*#4636#*#* - Kuonyesha taarifa za betri, mtandao, na takwimu za matumizi.",
+
+        "biospassword": "RIPOTI YA KIELEKTRONIKI: KUSAHAU NENOSIRI LA BIOS KWA KOMPYUTA\n\n" +
+                        "• Chanzo na Athari:\n" +
+                        "Kompyuta kugoma kuwaka au kubadilisha mfumo wa kuwasha kutokana na ulinzi wa BIOS.\n\n" +
+                        "• Suluhu na Hatua za Kitaalamu:\n" +
+                        "1. Kutoa Betri Ndogo: Fungua kompyuta na udoe betri ya CMOS kwa dakika tano kisha uirudishe.\n" +
+                        "2. Kuruka Pini za Reset: Tumia kipande cha chuma kuunganisha pini za CLR_CMOS kwenye bodi kuu.",
+
+        "sfcscannow": "RIPOTI YA KIELEKTRONIKI: KUTUMIA AMRI YA SFC KUTATUA MATATIZO YA WINDOWS\n\n" +
+                      "• Chanzo na Athari:\n" +
+                      "Faili za mfumo wa Windows zimeharibika na kusababisha kompyuta kuwa na kasi ndogo.\n\n" +
+                      "• Suluhu na Hatua za Kitaalamu:\n" +
+                      "1. Fungua Command Prompt kwa ruhusa ya Administrator.\n" +
+                      "2. Andika amri 'sfc /scannow' kisha bonyeza Enter na usubiri mfumo ujirekebishe.",
+
+        "networkunlocked": "RIPOTI YA KIELEKTRONIKI: KUFUNGUA MTANDAO WA SIMU ZA NJE (NETWORK UNLOCKING)\n\n" +
+                           "• Chanzo na Athari:\n" +
+                           "Simu kusoma laini ya ndani baada ya kuja kutoka nchi za kigeni ikiwa na mkataba.\n\n" +
+                           "• Suluhu na Hatua za Kitaalamu:\n" +
+                           "1. Kutumia Zana za Kompyuta: Tumia programu maalum za ufundi kusoma faili za EFS na kubadilisha vigezo vya mtandao.",
+
+        "oppoa57firmware": "RIPOTI YA KIELEKTRONIKI: KUSAKINISHA UPYA PROGRAMU YA OPPO A57 (FLASHING)\n\n" +
+                           "• Chanzo na Athari:\n" +
+                           "Simu kuganda kwenye nembo au kuzima ghafla baada ya kushambuliwa na faili mbovu.\n\n" +
+                           "• Suluhu na Hatua za Kitaalamu:\n" +
+                           "1. Kutumia SpFlashTool au zana rasmi za Oppo.\n" +
+                           "2. Kuunganisha kwa kushikilia vitufe vya sauti huku umechomeka kebo ya USB.",
+
+        "ufiboxsetup": "RIPOTI YA KIELEKTRONIKI: MATUMIZI YA UFI BOX KUTATUA MATATIZO YA EMMC/UFS\n\n" +
+                       "• Chanzo na Athari:\n" +
+                       "Kumbukumbu ya ndani ya simu imekufa au imepata hitilafu ya kudumu ya usomaji data.\n\n" +
+                       "• Suluhu na Hatua za Kitaalamu:\n" +
+                       "1. Kuchomelea waya za ISP kwenye bodi ya simu.\n" +
+                       "2. Kusoma na kuandika upya faili za Boot na Emmc kupitia programu ya UFI.",
+
+        "medusapro": "RIPOTI YA KIELEKTRONIKI: KUTUMIA MEDUSA PRO KUTENGENEZA BOOT ZA SIMU ZILIZOKufa\n\n" +
+                     "• Chanzo na Athari:\n" +
+                     "Simu kuonyesha hali ya 'Dead Boot' kutokana na kushindwa kusoma sekta za mwanzo za kuwasha.\n\n" +
+                     "• Suluhu na Hatua za Kitaalamu:\n" +
+                     "1. Kutumia miunganisho ya JTAG/ISP kurejesha mfumo wa kuwasha bila kubadilisha bodi.",
+
+        "anyunlocktool": "RIPOTI YA KIELEKTRONIKI: KUTUMIA ANYUNLOCK KUFUNGUA AKAUNTI NA VIZUIZI\n\n" +
+                         "• Chanzo na Athari:\n" +
+                         "Kusahaulika kwa akaunti za iCloud au Google kwenye vifaa vya kisasa.\n\n" +
+                         "• Suluhu na Hatua za Kitaalamu:\n" +
+                         "1. Kuunganisha kifaa kwenye kompyuta na kufuata maelekezo ya programu ili kuondoa vizuizi kwa usalama.", 
+  
+   
+        "pythonautomation": "RIPOTI YA KIELEKTRONIKI: AUTOMATION KWA KUTUMIA PYTHON\n\n" +
+                            "• Matumizi:\n" +
+                            "Kutengeneza scripts za kusimamia data kwenye Airtable au kutuma maagizo kwa Make moja kwa moja.\n\n" +
+                            "• Suluhu:\n" +
+                            "Tumia maktaba ya 'requests' kwa API calls na 'pandas' kwa kusafisha data za JSON/CSV.",
+
+        "solarpanelvoltage": "RIPOTI YA KIELEKTRONIKI: UTATUZI WA MFUMO WA NISHATI YA JUA (SOLAR)\n\n" +
+                             "• Tatizo:\n" +
+                             "Betri haijai vizuri au umeme haufiki kwenye vifaa.\n\n" +
+                             "• Suluhu:\n" +
+                             "1. Pima Voltage ya paneli (Voc) na mkondo (Isc) kwa kutumia Multimeter.\n" +
+                             "2. Hakikisha 'Charge Controller' haijapata hitilafu ya fuse.",
+
+        "softrdatafix": "RIPOTI YA KIELEKTRONIKI: KUTATUA HITILAFU ZA DATA KATI YA SOFTR NA AIRTABLE\n\n" +
+                        "• Tatizo:\n" +
+                        "Data haionekani kwenye app ya ByaoIA.\n\n" +
+                        "• Suluhu:\n" +
+                        "1. Angalia kama 'Field Name' kwenye Airtable imelingana na 'Mapping' ya Softr (kumbuka kutumia 'prompt' badala ya 'Description').\n" +
+                        "2. Hakikisha API Key bado ni hai.",
+
+        "androididecompile": "RIPOTI YA KIELEKTRONIKI: KUANDAA KODI YA ANDROID KWA KUTUMIA MOBILE IDE\n\n" +
+                             "• Utendaji:\n" +
+                             "Usimamizi wa faili za HTML/CSS/JS kwenye simu yako.\n\n" +
+                             "• Suluhu:\n" +
+                             "Tumia 'Folder-based workspace' kuratibu faili zako (CSS kwenye folda ya 'styles', JS kwenye 'scripts').",
+
+        "firebaseintegration": "RIPOTI YA KIELEKTRONIKI: FIREBASE REALTIME DATABASE SYNC\n\n" +
+                               "• Tatizo:\n" +
+                               "Data haisawazishi kati ya watumiaji mbalimbali.\n\n" +
+                               "• Suluhu:\n" +
+                               "1. Angalia 'Rules' za Firebase; hakikisha 'read' na 'write' ziko kwenye 'true' kwa ajili ya majaribio.\n" +
+                               "2. Hakikisha JSON config object imewekwa kwa usahihi katika msimbo wako wa 'Vodacom Pro' project.",
+
+        "vpnsecurity": "RIPOTI YA KIELEKTRONIKI: KULINDA DATA YA KAMPUNI KWA VPN\n\n" +
+                       "• Matumizi:\n" +
+                       "Kufanya kazi za ufundi bila kufuatiliwa na watoa huduma wa mtandao (ISP).\n\n" +
+                       "• Suluhu:\n" +
+                       "Tumia protokali za OpenVPN au WireGuard kwa kasi zaidi na usalama wa juu.",
+
+        "hardresetsony": "RIPOTI YA KIELEKTRONIKI: HARD RESET KWA SIMU ZA SONY XPERIA\n\n" +
+                         "• Hatua:\n" +
+                         "Tumia 'Sony PC Companion' kufanya 'Software Repair'. Hii inafuta kila kitu na kurudisha mfumo katika hali ya kiwandani bila kuhitaji nenosiri.",
+         "windowsactivator": "RIPOTI YA KIELEKTRONIKI: KUSALIMISHA NA KUISHAHIDI WINDOWS (ACTIVATION TROUBLESHOOTING)\n\n" +
+                            "• Tatizo:\n" +
+                            "Ujumbe wa 'Windows is not genuine' au kuisha kwa muda wa majaribio (Trial).\n\n" +
+                            "• Suluhu na Hatua:\n" +
+                            "1. Tumia amri za KMS kupitia Command Prompt ya Administrator.\n" +
+                            "2. Hakikisha huduma za Windows Update zimesimamishwa muda wa kusakinisha leseni.",
+
+        "printerspooler": "RIPOTI YA KIELEKTRONIKI: KUTATUA KUKWAMA KWA PRINTA (PRINTER SPOOLER FIX)\n\n" +
+                          "• Tatizo:\n" +
+                          "Hati hazitoki kwenye printa na zimekwama kwenye foleni (Queue).\n\n" +
+                          "• Suluhu na Hatua:\n" +
+                          "1. Simamisha 'Print Spooler' kupitia huduma za mfumo (services.msc).\n" +
+                          "2. Futa faili zote ndani ya folda ya Printers kwenye System32 na uwashe tena huduma hiyo.",
+
+        "wiapidrivers": "RIPOTI YA KIELEKTRONIKI: KUREKEBISHA HITILAFU ZA SCANNER NA DRIVERS ZAKE\n\n" +
+                        "• Tatizo:\n" +
+                        "Kompyuta haitambui kifaa cha kuchanganua nyaraka (Scanner/WIA).\n\n" +
+                        "• Suluhu na Hatua:\n" +
+                        "1. Sakinisha Sharp Global Drivers au Universal TWAIN drivers kulingana na muundo wa kifaa.\n" +
+                        "2. Hakikisha huduma ya 'Windows Image Acquisition (WIA)' inafanya kazi.",
+
+        "lostadminpassword": "RIPOTI YA KIELEKTRONIKI: KUPATA UPYA NENOSIRI LA ADMIN KISHAHIDI WINDOWS\n\n" +
+                             "• Tatizo:\n" +
+                             "Kushindwa kuingia kwenye akaunti ya Msimamizi (Administrator) ya kompyuta.\n\n" +
+                             "• Suluhu na Hatua:\n" +
+                             "1. Tumia USB ya kuanzia mfumo (Bootable USB) yenye zana za ukarabati.\n" +
+                             "2. Badilisha faili za usalama za kuingia ili kuruhusu amri za mfumo kwenye skrini ya kufuli.",
+
+        "networkdnsflush": "RIPOTI YA KIELEKTRONIKI: KUSAFISHA AKIBA YA MTANDAO (DNS FLUSH)\n\n" +
+                           "• Tatizo:\n" +
+                           "Kurasa za wavuti hazifunguki licha ya kuwa na intaneti.\n\n" +
+                           "• Suluhu na Hatua:\n" +
+                           "1. Fungua Command Prompt.\n" +
+                           "2. Andika amri 'ipconfig /flushdns' na kisha 'ipconfig /renew' ili kusasisha anwani za IP.",
+
+        "bluetoothdriverfix": "RIPOTI YA KIELEKTRONIKI: KUREKEBISHA MFUMO WA BLUETOOTH ULIOPOKEA HITILAFU\n\n" +
+                              "• Tatizo:\n" +
+                              "Kifaa cha Bluetooth kinapotea kwenye Device Manager au hakitafuti vifaa vingine.\n\n" +
+                              "• Suluhu na Hatua:\n" +
+                              "1. Fanya 'Uninstall' ya Bluetooth Adapter kwenye Device Manager.\n" +
+                              "2. Zima na uwashe kompyuta upya (Cold Boot) ili mfumo ujisakinishe upya.",
+
+        "ssdnotrecognized": "RIPOTI YA KIELEKTRONIKI: KUTAMBUA SSD MPYA KWENYE KOMPYUTA\n\n" +
+                            "• Tatizo:\n" +
+                            "SSD mpya iliyofungwa haionekani kwenye My Computer / This PC.\n\n" +
+                            "• Suluhu na Hatua:\n" +
+                            "1. Fungua 'Disk Management'.\n" +
+                            "2. Tafuta diski hiyo mpya, bonyeza kulia kisha uchague 'Initialize Disk' na uunde kiasi kipya (New Simple Volume).",
+
+        "partitionrecovery": "RIPOTI YA KIELEKTRONIKI: KUREJESHA SEHEMU ZA DISKI ZILIZOPOTEA (PARTITION RECOVERY)\n\n" +
+                             "• Tatizo:\n" +
+                             "Diski ngumu kupoteza mfumo wake wa kuhesabu mafaili (RAW format).\n\n" +
+                             "• Suluhu na Hatua:\n" +
+                             "1. Tumia zana maalum za kurejesha jedwali la partitions bila kupoteza data zilizomo ndani.",
+
+        "androidfastbootfix": "RIPOTI YA KIELEKTRONIKI: KUTATUA SIMU ILIYOKWAMA KWENYE FASTBOOT MODE\n\n" +
+                              "• Tatizo:\n" +
+                              "Simu kuonyesha skrini ya Fastboot na kukataa kuwaka kawaida.\n\n" +
+                              "• Suluhu na Hatua:\n" +
+                              "1. Bonyeza na ushikilie kitufe cha kuwasha (Power) kwa takriban sekunde 15 hadi 20 hadi simu izime na kuanza upya.",
+
+        "imeirepairbasic": "RIPOTI YA KIELEKTRONIKI: TARATIBU ZA KITAALAMU ZA UTATUZI WA IMEI\n\n" +
+                           "• Tatizo:\n" +
+                           "Simu kuandika 'Invalid IMEI' au kukosa mtandao baada ya kuwekewa mfumo mpya.\n\n" +
+                           "• Suluhu na Hatua:\n" +
+                           "1. Tumia zana maalum za kurekebisha NVRAM kupitia bandari ya USB ya kompyuta huku simu ikiwa kwenye Diagnostic Mode." , 
+         
+        "emmc_health_check": "RIPOTI YA KIELEKTRONIKI: KUPIMA AFYA YA EMMC KUPITIA UFI BOX\n\n" +
+                             "• Tatizo:\n" +
+                             "Simu kupata hitilafu za 'IO Error' wakati wa ku-flash.\n\n" +
+                             "• Suluhu:\n" +
+                             "Tumia kipengele cha 'Health Report' kwenye UFI kuanzisha vipimo vya 'Life Time Used'. Ikiwa iko juu ya 90%, EMMC inahitaji kubadilishwa.",
+
+        "lcd_backlight_repair": "RIPOTI YA KIELEKTRONIKI: KUREKEBISHA TAA YA NYUMA YA LCD (BACKLIGHT)\n\n" +
+                               "• Tatizo:\n" +
+                               "Simu inaonekana kupokea amri lakini skrini ni nyeusi (Ina mwanga hafifu).\n\n" +
+                               "• Suluhu:\n" +
+                               "Pima 'Backlight IC' na 'Diode' kwenye bodi ya simu. Badilisha 'Filter' iliyopata hitilafu ya mzunguko mfupi.",
+
+        "blogger_dns_mapping": "RIPOTI YA KIELEKTRONIKI: KUNGANISHA DOMAIN YA KIBINAFSI KWENYE BLOGGER\n\n" +
+                               "• Tatizo:\n" +
+                               "Domain haionyeshi tovuti yako.\n\n" +
+                               "• Suluhu:\n" +
+                               "Weka 'A records' za Google kwenye sehemu ya DNS ya mtoa huduma wako wa domain (mfano: 216.239.32.21, 216.239.34.21).",
+
+        "ssh_remote_access": "RIPOTI YA KIELEKTRONIKI: KUFIKIA SEVA KUPITIA SSH\n\n" +
+                             "• Utendaji:\n" +
+                             "Kutuma amri za terminal kwenye seva ya mbali.\n\n" +
+                             "• Suluhu:\n" +
+                             "Tumia amri: 'ssh username@server_ip'. Hakikisha ufunguo wa SSH (SSH Key) uko kwenye kifaa chako cha AndroidIDE.",
+
+        "json_data_validation": "RIPOTI YA KIELEKTRONIKI: KUSAFISHA NA KUTIBU DATA YA JSON\n\n" +
+                                "• Tatizo:\n" +
+                                "Integration ya Make inakataa kusoma faili ya JSON.\n\n" +
+                                "• Suluhu:\n" +
+                                "Tumia JSON Validator (kama JSONLint) kuangalia kama kuna mabano yaliyokosekana au 'comma' zilizozidi.",
+
+        "android_adb_logcat": "RIPOTI YA KIELEKTRONIKI: KUTUMIA ADB LOGCAT KUTAMBUA HITILAFU ZA PROGRAMU\n\n" +
+                              "• Tatizo:\n" +
+                              "Programu inafunguka na kufungika yenyewe (Crash).\n\n" +
+                              "• Suluhu:\n" +
+                              "Unganisha simu kwenye PC, andika 'adb logcat *:E' ili kuona ujumbe wa hitilafu wa mfumo wa Android.",
+
+        "battery_calibration": "RIPOTI YA KIELEKTRONIKI: KUSAHIHISHA ASILIMIA YA BETRI YA SIMU\n\n" +
+                               "• Tatizo:\n" +
+                               "Simu inajizima ikiwa na asilimia 20.\n\n" +
+                               "• Suluhu:\n" +
+                               "Zima simu, ichaji hadi 100% kwa saa kadhaa bila kuwasha, kisha uwashe na utumie hadi izime kabisa. Hii inarekebisha 'Battery Stats' kwenye mfumo.",
+
+        "bootloader_unlock_moto": "RIPOTI YA KIELEKTRONIKI: KUFUNGUA BOOTLOADER KWA SIMU ZA MOTOROLA\n\n" +
+                                  "• Hatua:\n" +
+                                  "Pata 'Unique ID' kupitia Fastboot mode, iwasilishe kwenye tovuti ya Motorola kupata ufunguo wa kufungulia.",
+
+        "website_cache_clear": "RIPOTI YA KIELEKTRONIKI: KUSAFISHA CACHE YA TOVUTI KWA WATUMIAJI\n\n" +
+                               "• Tatizo:\n" +
+                               "Wateja wanaona muundo wa zamani wa tovuti yako.\n\n" +
+                               "• Suluhu:\n" +
+                               "Sasisha 'Meta tags' za Cache kwenye sehemu ya HTML ya tovuti au safisha cache kwenye 'Cloudflare' au 'Hosting dashboard'.",
+
+        "micro_soldering_tips": "RIPOTI YA KIELEKTRONIKI: MAELEKEZO YA KUCHOMELEA VITU VIDOGO (MICRO-SOLDERING)\n\n" +
+                                "• Mbinu:\n" +
+                                "Tumia darubini (microscope), nyuzi za chuma (jumpers) zenye unene wa 0.01mm, na 'Flux' ya ubora wa juu ili kuepuka kuunganisha sehemu zisizohitajika.",
+                    
+        "css_flexbox_alignment": "RIPOTI YA KIELEKTRONIKI: KUTATUA MPANGILIO WA VIPENGELE KUPITIA CSS FLEXBOX\n\n" +
+                                 "• Tatizo:\n" +
+                                 "Vipengele kwenye tovuti au app havikaa sawa kwa usawa au wima.\n\n" +
+                                 "• Suluhu:\n" +
+                                 "Tumia 'display: flex;', 'justify-content: center;', na 'align-items: center;' ili kuhakikisha vipengele vimepangika vizuri kwenye skrini zote.",
+
+        "airtable_formula_sum": "RIPOTI YA KIELEKTRONIKI: KUTUMIA FORMULA ZA AIRTABLE KUTENGENEZA JUMLA\n\n" +
+                                "• Tatizo:\n" +
+                                "Kushindwa kuhesabu jumla ya takwimu za picha zilizotengenezwa kwenye hifadhidata.\n\n" +
+                                "• Suluhu:\n" +
+                                "Tumia uga wa 'Formula' na andika kazi ya hesabu kama vile '{Field1} + {Field2}' au tumia Summarize kwenye mwonekano wa jedwali.",
+
+        "make_webhook_error": "RIPOTI YA KIELEKTRONIKI: KUTATUA HITILAFU ZA WEBHOOK KUPITIA MAKE\n\n" +
+                              "• Tatizo:\n" +
+                              "Scenario ya Make inakataa kupokea data kutoka kwenye fomu yako.\n\n" +
+                              "• Suluhu:\n" +
+                              "1. Hakikisha Webhook URL imenakiliwa kwa usahihi.\n" +
+                              "2. Fanya 'Determine data structure' tena kwa kutuma data mpya ili mfumo utambue muundo wa JSON.",
+
+        "html_meta_viewport": "RIPOTI YA KIELEKTRONIKI: KUBORESHA ONYESHO LA SIMU KUPITIA META VIEWPORT\n\n" +
+                              "• Tatizo:\n" +
+                              "Tovuti inaonekana ndogo sana au inahitaji kuvutwa (zoom) kwenye simu.\n\n" +
+                              "• Suluhu:\n" +
+                              "Weka mstari huu kwenye kichwa cha HTML: '<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">'.",
+
+        "javascript_localstorage": "RIPOTI YA KIELEKTRONIKI: KUTUNZA DATA KUPITIA JAVASCRIPT LOCALSTORAGE\n\n" +
+                                   "• Matumizi:\n" +
+                                   "Kuhifadhi mapendeleo ya mtumiaji kama vile mandhari (Dark Mode) kwenye kivinjari cha simu.\n\n" +
+                                   "• Suluhu:\n" +
+                                   "Tumia amri ya 'localStorage.setItem(\"theme\", \"dark\");' na kuichomoa kwa 'localStorage.getItem(\"theme\");'.",
+
+        "android_usb_debugging": "RIPOTI YA KIELEKTRONIKI: KUWASHA USB DEBUGGING KWENYE ANDROID\n\n" +
+                                 "• Tatizo:\n" +
+                                 "Kompyuta au AndroidIDE haitambui simu iliyounganishwa kwa kebo.\n\n" +
+                                 "• Suluhu:\n" +
+                                 "Nenda kwenye Settings > About Phone, bonyeza mara 7 kwenye 'Build Number' ili uwe Developer, kisha uwashe 'USB Debugging' kwenye Developer Options.",
+
+        "huggingface_api_limit": "RIPOTI YA KIELEKTRONIKI: KUTATUA KIKOMO CHA API YA HUGGING FACE\n\n" +
+                                 "• Tatizo:\n" +
+                                 "Programu ya ByaoIA inaleta ujumbe wa 'Model is loading' au 'Rate limit exceeded'.\n\n" +
+                                 "• Suluhu:\n" +
+                                 "Ongeza muda wa kusubiri (Timeout) kwenye ombi lako au tumia Access Token yenye ruhusa za ziada kupitia akaunti yako.",
+
+        "git_basic_commit": "RIPOTI YA KIELEKTRONIKI: KUTUNZA MABADILIKO YA MSIMBO KUPITIA GIT\n\n" +
+                            "• Utendaji:\n" +
+                            "Kurekodi na kuhifadhi nakala za kazi zako za programu.\n\n" +
+                            "• Suluhu:\n" +
+                            "Tumia amri 'git add .', ikifuatiwa na 'git commit -m \"Uboreshaji wa moduli\"' ili kuhifadhi kazi yako rasmi.",
+
+        "dns_propagation_check": "RIPOTI YA KIELEKTRONIKI: KUPIMA KUSAMBAA KWA DNS (PROPAGATION)\n\n" +
+                                 "• Tatizo:\n" +
+                                 "Domain mpya uliyoweka haifunguki kwa watumiaji wa nchi fulani.\n\n" +
+                                 "• Suluhu:\n" +
+                                 "Tumia tovuti za uchunguzi wa mtandaoni kama DNSChecker ili kuona kama anwani za IP zimesambaa duniani kote.",
+
+        "responsive_image_css": "RIPOTI YA KIELEKTRONIKI: KUFANYA PICHA ZIJILINGANISHE NA UKUBWA WA SKRINI\n\n" +
+                                "• Tatizo:\n" +
+                                "Picha zinatoka nje ya mipaka ya skrini ya simu.\n\n" +
+                                "• Suluhu:\n" +
+                                "Weka sifa za CSS kwenye picha: 'max-width: 100%; height: auto;' ili zibadilike ukubwa kulingana na kifaa kinachotumika.", 
+                 
+        "pc_software_chkdsk_disk_repair": "RAPPORT TECHNIQUE : RÉPARATION DES SECTEURS DÉFECTUEUX DU DISQUE DUR VIA CHKDSK\n\n" +
+                                            "• Problème :\n" +
+                                            "Ralentissements extrêmes, fichiers illisibles ou erreurs de lecture sur le disque dur mécanique (HDD) ou SSD.\n\n" +
+                                            "• Solution et Étapes :\n" +
+                                            "1. Ouvrir l'invite de commande en mode Administrateur.\n" +
+                                            "2. Exécuter la commande `chkdsk C: /f /r /x` pour analyser l'intégrité du système de fichiers, isoler les secteurs défectueux et récupérer les données exploitables.",
+
+        "network_wireshark_packet_capture": "RAPPORT TECHNIQUE : ANALYSE DES PAQUETS RÉSEAU ET TRAFIC VIA WIRESHARK\n\n" +
+                                             "• Objectif :\n" +
+                                             "Inspecter en temps réel les flux de données transitant par le réseau local pour identifier une anomalie ou une application malveillante.\n\n" +
+                                             "• Solution et Étapes :\n" +
+                                             "1. Lancer Wireshark et sélectionner l'interface réseau active (Wi-Fi ou Ethernet).\n" +
+                                             "2. Appliquer des filtres de capture ciblés (ex: `ip.addr == 192.168.1.50` ou `http` / `dns`) pour isoler les requêtes spécifiques du client.",
+
+        "pc_hardware_thermal_paste_application": "RAPPORT TECHNIQUE : APPLICATION ET REMPLACEMENT DE LA PÂTE THERMIQUE (CPU/GPU)\n\n" +
+                                                "• Problème :\n" +
+                                                "Surchauffe excessive de l'ordinateur, ventilation bruyante en permanence et coupures inopinées (Thermal Throttling).\n\n" +
+                                                "• Solution et Étapes :\n" +
+                                                "1. Nettoyer soigneusement les anciens résidus de pâte thermique séchée sur le processeur et le radiateur à l'aide d'alcool isopropylique.\n" +
+                                                "2. Appliquer une noisette de pâte thermique haute performance (ou un pad thermique en métal liquide) et serrer les vis du dissipateur en croix.",
+
+        "pc_software_sfc_dism_repair": "RAPPORT TECHNIQUE : RÉPARATION DES FICHIERS SYSTÈMES CORROMPUS (SFC ET DISM)\n\n" +
+                                      "• Problème :\n" +
+                                      "Dysfonctionnements aléatoires de Windows, applications natives qui se ferment seules ou impossibilité d'installer des mises à jour.\n\n" +
+                                      "• Solution et Étapes :\n" +
+                                      "1. Ouvrir le terminal en administrateur et lancer l'outil de maintenance de l'image système : `DISM /Online /Cleanup-Image /RestoreHealth`.\n" +
+                                      "2. Une fois terminé, exécuter la commande `sfc /scannow` pour remplacer définitivement les fichiers système endommagés par des copies saines.",
+
+        "hardware_bluetooth_module_repair": "RAPPORT TECHNIQUE : DIAGNOSTIC ET RÉPARATION DU MODULE BLUETOOTH INTERNE (PC/MOBILE)\n\n" +
+                                            "• Problème :\n" +
+                                            "L'icône Bluetooth a disparu, impossibilité d'activer la fonction ou aucun appareil périphérique ne se connecte.\n\n" +
+                                            "• Solution et Étapes :\n" +
+                                            "1. Vérifier dans le Gestionnaire de périphériques si le contrôleur présente un point d'exclamation jaune (erreur de pilote ou bus USB bloqué).\n" +
+                                            "2. Effectuer un redémarrage électrique complet du PC (extinction, débranchement du secteur et appui de 30 secondes sur le bouton Power) pour réinitialiser le contrôleur.",
+
+        "pc_software_event_viewer_analysis": "RAPPORT TECHNIQUE : ANALYSE DES JOURNAUX D'ÉVÉNEMENTS WINDOWS (EVENT VIEWER)\n\n" +
+                                            "• Objectif :\n" +
+                                            "Identifier la cause exacte d'un arrêt imprévu du système ou d'un échec de service en explorant les historiques du système.\n\n" +
+                                            "• Solution et Étapes :\n" +
+                                            "1. Ouvrir l'Observateur d'événements (`eventvwr.msc`) via la commande Exécuter.\n" +
+                                            "2. Explorer la section *Journaux Windows > Système* et filtrer par niveau 'Critique' ou 'Erreur' pour repérer l'identifiant (Event ID) du problème.",
+
+        "hardware_usb_port_power_limit": "RAPPORT TECHNIQUE : RÉSOLUTION DES PROBLÈMES DE SURCHARGE DES PORTS USB\n\n" +
+                                         "• Problème :\n" +
+                                         "Message d'alerte 'Surtension sur le port USB' ou périphériques externes qui s'éteignent subitement lorsqu'ils sont branchés.\n\n" +
+                                         "• Solution et Étapes :\n" +
+                                         "1. Inspecter les ports physiques pour détecter des broches tordues en court-circuitant l'alimentation 5V.\n" +
+                                         "2. Désactiver la gestion de l'alimentation des concentrateurs USB dans le Gestionnaire de périphériques pour stabiliser le courant délivré.",
+
+        "pc_software_net_user_password_reset": "RAPPORT TECHNIQUE : RÉINITIALISATION DU MOT DE PASSE ADMINISTRATEUR WINDOWS (HORS LIGNE)\n\n" +
+                                               "• Problème :\n" +
+                                               "Utilisateur bloqué hors de sa session Windows suite à l'oubli du mot de passe de connexion.\n\n" +
+                                               "• Solution et Étapes :\n" +
+                                               "1. Démarrer le PC sur une clé USB de secours (Windows PE), accéder au disque système et remplacer le binaire `utilman.exe` par `cmd.exe`.\n" +
+                                               "2. Redémarrer sur l'écran de connexion, ouvrir l'invite de commande via les options d'accessibilité et utiliser `net user <utilisateur> <nouveau_mot_de_passe>`.",
+
+        "hardware_screen_backlight_fuse": "RAPPORT TECHNIQUE : RÉPARATION DU FUSIBLE DE RÉTROÉCLAIRAGE DE LA CARTE MÈRE\n\n" +
+                                         "• Problème :\n" +
+                                         "L'affichage de l'écran du PC portable fonctionne mais la dalle reste totalement noire (absence de rétroéclairage).\n\n" +
+                                         "• Solution et Étapes :\n" +
+                                         "1. Mesurer la continuité du minuscule fusible de protection (Fuse) situé sur le circuit de l'écran de la carte mère.\n" +
+                                         "2. Remplacer le fusible grillé ou effectuer un pontage de sécurité si le circuit de régulation haute tension n'est pas endommagé.",
+
+        "pc_software_hosts_file_redirection": "RAPPORT TECHNIQUE : MODIFICATION ET UTILISATION DU FICHIER HOSTS POUR LE BLOCAGE\n\n" +
+                                              "• Objectif :\n" +
+                                              "Forcer la redirection de certains noms de domaine ou bloquer l'accès à des serveurs publicitaires/logiciels au niveau du système.\n\n" +
+                                              "• Solution et Étapes :\n" +
+                                              "1. Ouvrir le fichier situé dans `C:\\Windows\\System32\\drivers\\etc\\hosts` avec un éditeur de texte en mode Administrateur.\n" +
+                                              "2. Ajouter la ligne de liaison locale (ex: `127.0.0.1 nom_du_domaine.com`) pour interdire toute communication externe vers cette adresse.", 
+                                     
+        "pc_hardware_fan_bearing_repair": "RAPPORT TECHNIQUE : RÉPARATION ET LUBRIFICATION DES VENTILATEURS DE PC PORTABLE\n\n" +
+                                          "• Problème :\n" +
+                                          "Bruit de grincement strident, vibrations excessives ou message 'CPU Fan Error' au démarrage de l'ordinateur.\n\n" +
+                                          "• Solution et Étapes :\n" +
+                                          "1. Démonter délicatement le ventilateur, retirer l'autocollant arrière et nettoyer l'axe du rotor.\n" +
+                                          "2. Appliquer une goutte d'huile lubrifiante de synthèse (ou de graisse silicone) sur le palier pour rétablir une rotation fluide et silencieuse.",
+
+        "pc_software_bitlocker_recovery_bypass": "RAPPORT TECHNIQUE : CONTOURNEMENT ET RÉCUPÉRATION DE LA CLÉ BITLOCKER\n\n" +
+                                                 "• Problème :\n" +
+                                                 "L'ordinateur demande une clé de récupération BitLocker de 48 chiffres au démarrage suite à une modification du BIOS ou du matériel.\n\n" +
+                                                 "• Solution et Étapes :\n" +
+                                                 "1. Récupérer la clé de chiffrement directement depuis le compte Microsoft en ligne de l'utilisateur ou via un stockage externe de sauvegarde.\n" +
+                                                 "2. Entrer la clé dans l'invite de commande de déchiffrement pour restaurer l'accès aux données du disque dur sans formatage.",
+
+        "pc_hardware_ssd_nvme_not_detected": "RAPPORT TECHNIQUE : DIAGNOSTIC DES SSD NVME M.2 NON DÉTECTÉS PAR LA CARTE MÈRE\n\n" +
+                                              "• Problème :\n" +
+                                              "Le nouveau SSD NVMe installé ne s'affiche ni dans le BIOS ni dans l'outil de gestion des disques Windows.\n\n" +
+                                              "• Solution et Étapes :\n" +
+                                              "1. Vérifier si le port M.2 prend en charge le protocole PCIe/NVMe ou s'il est limité aux anciens disques SATA.\n" +
+                                              "2. Nettoyer les contacts dorés du SSD, réinsérer le module à un angle de 30 degrés, et mettre à jour le microprogramme (Firmware) de la carte mère.",
+
+        "pc_software_netsh_reset_tcp_ip": "RAPPORT TECHNIQUE : RÉINITIALISATION COMPLÈTE DE LA PILE TCP/IP ET DES SOCKETS SOUS WINDOWS\n\n" +
+                                         "• Problème :\n" +
+                                         "Connexion Internet instable, pages Web qui chargent en boucle ou impossibilité d'obtenir une adresse IP valide malgré un Wi-Fi connecté.\n\n" +
+                                         "• Solution et Étapes :\n" +
+                                         "1. Ouvrir l'invite de commande en mode Administrateur.\n" +
+                                         "2. Exécuter les commandes `netsh winsock reset` et `netsh int ip reset`, puis redémarrer l'ordinateur pour réinitialiser les couches réseau du système.",
+
+        "pc_hardware_cmos_battery_replacement": "RAPPORT TECHNIQUE : REMPLACEMENT DE LA PILE CMOS ET RÉSOLUTION DES ERREURS DE DATE\n\n" +
+                                               "• Problème :\n" +
+                                               "L'ordinateur perd l'heure et la date à chaque extinction complète et affiche l'erreur 'CMOS Checksum Bad' au démarrage.\n\n" +
+                                               "• Solution et Étapes :\n" +
+                                               "1. Localiser la pile bouton CMOS (CR2032) sur la carte mère du PC portable ou de bureau.\n" +
+                                               "2. Remplacer la pile usée par une neuve mesurant 3V, puis reconfigurer les paramètres de base dans le menu BIOS.",
+
+        "pc_software_local_account_creation": "RAPPORT TECHNIQUE : CRÉATION D'UN COMPTE UTILISATEUR LOCAL SANS COMPTE MICROSOFT\n\n" +
+                                               "• Objectif :\n" +
+                                               "Ignorer l'obligation de connexion à un compte Microsoft lors de l'installation initiale de Windows 11.\n\n" +
+                                               "• Solution et Étapes :\n" +
+                                               "1. Sur l'écran de configuration du réseau, utiliser le raccourci Shift + F10 pour ouvrir l'invite de commande.\n" +
+                                               "2. Taper la commande `oobe\\bypassnro` pour redémarrer le processus d'installation et choisir l'option de création d'un compte local classique.",
+
+        "pc_hardware_hinge_repair_plastic": "RAPPORT TECHNIQUE : RÉPARATION DES CHARNIÈRES CASSÉES ET DES INSERTS DE COQUE\n\n" +
+                                            "• Problème :\n" +
+                                            "Les charnières de l'écran du PC portable arrachent les vis de fixation en plastique de la coque lors de l'ouverture.\n\n" +
+                                            "• Solution et Étapes :\n" +
+                                            "1. Démonter l'écran et la coque inférieure, nettoyer les supports en plastique brisés.\n" +
+                                            "2. Reconstruire les fixations à l'aide de résine époxy bicomposant de haute résistance et refixer les inserts filetés en laiton d'origine.",
+
+        "pc_software_windows_update_fixer": "RAPPORT TECHNIQUE : RÉPARATION DES ERREURS DE MISE À JOUR WINDOWS BLOQUÉES\n\n" +
+                                            "• Problème :\n" +
+                                            "Les mises à jour de Windows échouent constamment ou restent bloquées à un pourcentage fixe (ex: 99%).\n\n" +
+                                            "• Solution et Étapes :\n" +
+                                            "1. Arrêter les services de mise à jour via la ligne de commande (`net stop wuauserv`, `net stop cryptsvc`).\n" +
+                                            "2. Vider le contenu des dossiers `SoftwareDistribution` et `Catroot2`, puis redémarrer les services pour relancer le téléchargement propre.",
+
+        "pc_hardware_webcam_flex_repair": "RAPPORT TECHNIQUE : RÉPARATION DE LA NAPPE DE WEBCAM ET MICROPHONE INTÉGRÉ\n\n" +
+                                          "• Problème :\n" +
+                                          "La webcam intégrée du PC portable affiche un écran noir ou disparaît du Gestionnaire de périphériques lors de l'inclinaison de l'écran.\n\n" +
+                                          "• Solution et Étapes :\n" +
+                                          "1. Inspecter la nappe vidéo et de la webcam qui passe par la charnière de l'écran (souvent pincée ou coupée par l'usure).\n" +
+                                          "2. Refaire la piste endommagée par un micro-pont en fil de cuivre émaillé ou remplacer entièrement le faisceau de la nappe.",
+
+        "pc_software_partition_resize_diskpart": "RAPPORT TECHNIQUE : REDIMENSIONNEMENT DES PARTITIONS DE DISQUE VIA DISKPART\n\n" +
+                                                  "• Objectif :\n" +
+                                                  "Agrandir la partition système (C:) en fusionnant l'espace non alloué sans utiliser de logiciels tiers payants.\n\n" +
+                                                  "• Solution et Étapes :\n" +
+                                                  "1. Ouvrir l'invite de commande et lancer l'outil `diskpart`, puis afficher les volumes avec `list volume`.\n" +
+                                                  "2. Sélectionner le volume cible avec `select volume X` et exécuter la commande `extend size=N` pour augmenter sa capacité.", 
+                     
+        "pc_hardware_motherboard_short_diagnosis": "RAPPORT TECHNIQUE : DIAGNOSTIC DES COURTS-CIRCUITS SUR CARTE MÈRE DE PC PORTABLE\n\n" +
+                                                  "• Problème :\n" +
+                                                  "Le chargeur s'éteint ou se met en sécurité dès qu'il est branché à l'ordinateur portable (court-circuit sur la ligne principale V_IN / B+).\n\n" +
+                                                  "• Solution et Étapes :\n" +
+                                                  "1. Utiliser une alimentation de laboratoire réglée sur 19V avec une faible limite de courant pour identifier le composant qui chauffe.\n" +
+                                                  "2. Remplacer le MOSFET d'entrée grillé, le condensateur céramique en court-circuit, ou la puce de charge (Charging IC).",
+
+        "pc_hardware_gpu_reballing_reflow": "RAPPORT TECHNIQUE : RÉPARATION DES CARTES GRAPHIQUES (GPU REFLOW / REBALLING)\n\n" +
+                                           "• Problème :\n" +
+                                           "Écran noir, artefacts visuels (lignes bizarres sur l'écran), ou plantage du PC dès le lancement d'un jeu ou d'un logiciel lourd.\n\n" +
+                                           "• Solution et Étapes :\n" +
+                                           "1. Effectuer un test de chauffe contrôlée (Reflow) ou un démontage complet pour un Reballing de la puce graphique avec de la nouvelle soudure plombée.\n" +
+                                           "2. Nettoyer et remplacer la pâte thermique de haute qualité et les pads thermiques sur le système de refroidissement.",
+
+        "pc_software_bsod_minidump_analysis": "RAPPORT TECHNIQUE : ANALYSE DES ÉCRANS BLEUS DE LA MORT (BSOD) VIA MINIDUMP\n\n" +
+                                            "• Problème :\n" +
+                                            "Redémarrage intempestif de l'ordinateur affichant un écran bleu avec un code d'erreur (ex: CRITICAL_PROCESS_DIED).\n\n" +
+                                            "• Solution et Étapes :\n" +
+                                            "1. Utiliser le logiciel gratuit 'BlueScreenView' ou l'outil 'WinDbg' pour analyser les fichiers de rapport (.dmp) situés dans le dossier `C:\\Windows\\Minidump`.\n" +
+                                            "2. Identifier le pilote (driver) ou le composant matériel défectueux responsable du crash et procéder à sa mise à jour ou sa suppression.",
+
+        "pc_hardware_bios_flashing_eeprom": "RAPPORT TECHNIQUE : PROGRAMMATION ET FLASHAGE DE LA PUCE BIOS/EEPROM (SPI PROGRAMMER)\n\n" +
+                                          "• Problème :\n" +
+                                          "PC complètement bloqué ('Brick') après une mise à jour du BIOS interrompue ou une modification incorrecte des paramètres.\n\n" +
+                                          "• Solution et Étapes :\n" +
+                                          "1. Dessouder la puce mémoire flash SPI du BIOS ou utiliser une pince de programmation (SOIC8 clip).\n" +
+                                          "2. Connecter la puce à un programmateur externe (ex: CH341A) pour réinjecter un fichier de dump BIOS propre et fonctionnel extrait du site constructeur.",
+
+        "pc_hardware_keyboard_replacement_rivets": "RAPPORT TECHNIQUE : REMPLACEMENT DE CLAVIER INTÉGRÉ FIXÉ PAR RIVETS THERMIQUES\n\n" +
+                                                   "• Problème :\n" +
+                                                   "Touches du clavier de l'ordinateur portable inopérantes ou bloquées suite à un liquide ou une usure mécanique.\n\n" +
+                                                   "• Solution et Étapes :\n" +
+                                                   "1. Retirer la plaque de protection thermique et fondre délicatement les rivets en plastique à l'aide d'un fer à souder pour détacher l'ancien clavier.\n" +
+                                                   "2. Installer le nouveau clavier et fixer les points de fusion avec un point de colle thermique ou plastique pour assurer une solidité parfaite.",
+
+        "pc_software_mbr_gpt_conversion": "RAPPORT TECHNIQUE : CONVERSION DE DISQUE MBR EN GPT SANS PERTE DE DONNÉES\n\n" +
+                                         "• Problème :\n" +
+                                         "Impossible d'installer Windows 11 ou d'activer le mode de démarrage UEFI car le disque est formaté en ancien format MBR.\n\n" +
+                                         "• Solution et Étapes :\n" +
+                                         "1. Ouvrir l'invite de commande (CMD) en mode administrateur dans un environnement de secours.\n" +
+                                         "2. Utiliser l'outil natif de Windows `mbr2gpt /convert /allowfullos` pour transformer la structure du disque sans formater les données existantes.",
+
+        "pc_hardware_dc_jack_repair": "RAPPORT TECHNIQUE : RÉPARATION ET SOUDURE DU PORT D'ALIMENTATION (DC JACK)\n\n" +
+                                      "• Problème :\n" +
+                                      "Le PC portable ne charge que si l'on maintient le câble du chargeur dans une position bien précise (faux contact).\n\n" +
+                                      "• Solution et Étapes :\n" +
+                                      "1. Démonter le PC pour accéder au connecteur d'alimentation (DC Jack) fixé sur la carte mère ou relié par un câble.\n" +
+                                      "2. Refaire les soudures fissurées sur les broches de la carte mère ou remplacer entièrement le module DC Jack par une pièce neuve.",
+
+        "pc_software_windows_registry_clean": "RAPPORT TECHNIQUE : NETTOYAGE ET RÉPARATION DE LA BASE DE REGISTRE WINDOWS\n\n" +
+                                             "• Problème :\n" +
+                                             "Ralentissements extrêmes du système, messages d'erreur au lancement des programmes ou impossibilité d'installer des logiciels.\n\n" +
+                                             "• Solution et Étapes :\n" +
+                                             "1. Utiliser l'éditeur de registre (`regedit`) pour supprimer les clés orphelines de programmes désinstallés de force.\n" +
+                                             "2. Nettoyer les entrées corrompues à l'aide d'outils de maintenance fiables pour restaurer la fluidité du système d'exploitation.",
+
+        "pc_hardware_ram_slot_repair": "RAPPORT TECHNIQUE : NETTOYAGE ET RÉPARATION DES LOGEMENTS DE MÉMOIRE RAM\n\n" +
+                                       "• Problème :\n" +
+                                       "L'ordinateur émet des bips sonores au démarrage (Beep codes) ou refuse de s'allumer en raison d'un mauvais contact de la mémoire RAM.\n\n" +
+                                       "• Solution et Étapes :\n" +
+                                       "1. Nettoyer les connecteurs dorés de la barrette de RAM avec une gomme propre et les fentes du slot à l'aide d'une brosse et d'alcool isopropylique.\n" +
+                                       "2. Inspecter les soudures du slot RAM sous microscope et refaire les pistes endommagées en cas de micro-fissure due à une flexion de la carte mère.",
+
+        "pc_software_recovery_partition_restoration": "RAPPORT TECHNIQUE : RESTAURATION DE LA PARTITION DE RÉCUPÉRATION USINE (OEM)\n\n" +
+                                                       "• Objectif :\n" +
+                                                       "Remettre un ordinateur portable à l'état d'usine avec tous ses pilotes et logiciels d'origine du fabricant.\n\n" +
+                                                       "• Solution et Étapes :\n" +
+                                                       "1. Accéder à l'environnement de récupération au démarrage (touches F9, F11 ou Alt+F10 selon la marque du PC).\n" +
+                                                       "2. Lancer la restauration à partir de la partition cachée du constructeur ou recréer une clé USB de restauration d'usine officielle.", 
+                     
+        "firmware_frp_bypass_manual": "RAPPORT TECHNIQUE : CONTOURNEMENT DE LA PROTECTION FRP (FACTORY RESET PROTECTION) SANS DONGLE\n\n" +
+                                       "• Problème :\n" +
+                                       "Le téléphone demande le compte Google du propriétaire précédent après une réinitialisation d'usine.\n\n" +
+                                       "• Solution et Étapes :\n" +
+                                       "1. Exploiter les failles du menu 'TalkBack' ou 'Clavier' pour accéder aux paramètres système ou au navigateur Web.\n" +
+                                       "2. Télécharger et installer des applications de contournement (ex: Google Account Manager APK) pour ajouter un nouveau compte Google ou supprimer le verrouillage via les options de développement.",
+
+        "firmware_mdm_unlock_method": "RAPPORT TECHNIQUE : SUPPRESSION DES VERROUILLAGES MDM (MOBILE DEVICE MANAGEMENT)\n\n" +
+                                     "• Problème :\n" +
+                                     "Appareil bloqué par une entreprise (MDM Profile) empêchant la réinitialisation ou l'installation d'applications.\n\n" +
+                                     "• Solution et Étapes :\n" +
+                                     "1. Utiliser des outils de lecture/écriture de partitions (ex: MTK Client ou EDL Mode) pour effacer la partition 'persist' ou 'frp'.\n" +
+                                     "2. Après le reboot, désactiver immédiatement toutes les connexions Wi-Fi pour empêcher la réinscription du profil MDM via les serveurs distants.",
+
+        "hardware_screen_refurbishing": "RAPPORT TECHNIQUE : RÉNOVATION D'ÉCRAN (GLASSS ONLY REPLACEMENT)\n\n" +
+                                        "• Objectif :\n" +
+                                        "Remplacer uniquement la vitre tactile brisée sans changer l'écran LCD/OLED complet pour réduire les coûts.\n\n" +
+                                        "• Solution et Étapes :\n" +
+                                        "1. Utiliser une machine séparatrice à chaud ou un fil de molybdène pour découper la colle OCA (Optically Clear Adhesive) entre la vitre et l'écran.\n" +
+                                        "2. Nettoyer les résidus de colle, appliquer une nouvelle feuille OCA, et utiliser une machine à vide (Vacuum Lamination) pour coller la nouvelle vitre sans bulles.",
+
+        "network_imei_repair_legal": "RAPPORT TECHNIQUE : RÉPARATION ET RESTAURATION DE L'IMEI D'ORIGINE (NVRAM/NV DATA)\n\n" +
+                                     "• Problème :\n" +
+                                     "Appareil affichant 'IMEI Null' ou 'Invalid IMEI' suite à un formatage complet de la partition NVRAM.\n\n" +
+                                     "• Solution et Étapes :\n" +
+                                     "1. Restaurer le fichier NVRAM sauvegardé préalablement via un outil de diagnostic (ex: Meta Mode Tool pour MTK).\n" +
+                                     "2. Si la sauvegarde n'existe pas, reconstruire les données de calibration radio (Baseband) et réinjecter l'IMEI légal gravé sur le châssis du téléphone.",
+
+        "hardware_battery_bms_reset": "RAPPORT TECHNIQUE : RÉINITIALISATION DU CIRCUIT DE PROTECTION DE LA BATTERIE (BMS)\n\n" +
+                                      "• Problème :\n" +
+                                      "La batterie affiche un pourcentage erroné ou refuse de charger au-delà d'un certain seuil (ex: 80%).\n\n" +
+                                      "• Solution et Étapes :\n" +
+                                      "1. Réinitialiser manuellement les données de cycle de charge stockées dans la puce de la batterie (BMS) à l'aide d'un programmateur de batterie externe.\n" +
+                                      "2. Effectuer un cycle complet (charge à 100%, décharge à 0%) pour recalibrer le fichier 'batterystats.bin' dans le système Android.",
+
+        "os_debloat_system_apps": "RAPPORT TECHNIQUE : OPTIMISATION ET DÉBLOAT DU SYSTÈME ANDROID\n\n" +
+                                  "• Objectif :\n" +
+                                  "Supprimer les applications préinstallées inutiles (Bloatwares) qui ralentissent le processeur et consomment la RAM.\n\n" +
+                                  "• Solution et Étapes :\n" +
+                                  "1. Utiliser ADB (Android Debug Bridge) avec la commande `adb shell pm uninstall -k --user 0 <package_name>`.\n" +
+                                  "2. Cette méthode désinstalle les applications pour l'utilisateur actuel sans avoir besoin du root, libérant ainsi des ressources système significatives.",
+
+        "hardware_nfc_antenna_repair": "RAPPORT TECHNIQUE : RÉPARATION DE L'ANTENNE NFC (NEAR FIELD COMMUNICATION)\n\n" +
+                                       "• Problème :\n" +
+                                       "Le paiement sans contact (Mobile Money/NFC) ne fonctionne pas malgré une activation dans les réglages.\n\n" +
+                                       "• Solution et Étapes :\n" +
+                                       "1. Vérifier la nappe flexible de l'antenne NFC collée généralement à l'arrière du châssis ou de la batterie.\n" +
+                                       "2. Remplacer la nappe ou refaire les contacts de pression (pogo pins) qui relient l'antenne à la carte mère.",
+
+        "firmware_partition_backup": "RAPPORT TECHNIQUE : SAUVEGARDE COMPLÈTE DES PARTITIONS CRITIQUES (DUMP)\n\n" +
+                                     "• Importance :\n" +
+                                     "Avant toute manipulation, conserver une image binaire de 'Boot', 'Recovery', 'System', 'Vendor', et 'Persist'.\n\n" +
+                                     "• Solution :\n" +
+                                     "Utiliser `dd` via un shell root (ADB shell) ou un outil comme 'MTK Client' pour extraire les fichiers .img directement depuis la mémoire flash vers le PC.",
+
+        "hardware_speaker_grill_cleaning": "RAPPORT TECHNIQUE : DÉBOUCHAGE DES GRILLES DE HAUT-PARLEUR (ASPECT ESTHÉTIQUE ET AUDIO)\n\n" +
+                                           "• Problème :\n" +
+                                           "Son étouffé ou très faible malgré un haut-parleur fonctionnel.\n\n" +
+                                           "• Solution et Étapes :\n" +
+                                           "1. Utiliser une brosse à dents souple imbibée d'alcool isopropylique pour dissoudre les résidus de poussière, de métal ou de maquillage incrustés dans les mailles.\n" +
+                                           "2. Finir avec un aspirateur de précision ou une soufflette pour expulser les débris vers l'extérieur.",
+
+        "network_carrier_unlock_policy": "RAPPORT TECHNIQUE : DÉBLOQUAGE OPÉRATEUR (SIM UNLOCK)\n\n" +
+                                         "• Problème :\n" +
+                                         "Téléphone verrouillé sur un opérateur spécifique (Network Locked).\n\n" +
+                                         "• Solution et Étapes :\n" +
+                                         "1. Vérifier si l'appareil est éligible au code de déverrouillage officiel auprès de l'opérateur.\n" +
+                                         "2. Si non, utiliser des services tiers de calcul de code de déverrouillage basés sur l'IMEI ou, pour les appareils compatibles, modifier les fichiers de configuration du modem (Qualcomm/MTK) pour forcer le déblocage.", 
+                   
+        "hardware_camera_ic_repair": "RAPPORT TECHNIQUE : RÉPARATION DE L'IC DE CAMÉRA ET ERREURS D'APPLICATION\n\n" +
+                                     "• Problème :\n" +
+                                     "Message 'Impossible de se connecter à l'appareil photo' ou écran noir persistant malgré le remplacement des modules caméra.\n\n" +
+                                     "• Solution et Étapes :\n" +
+                                     "1. Vérifier les tensions d'alimentation (AVDD, DVDD, AFVDD) sur les condensateurs autour du connecteur de la caméra.\n" +
+                                     "2. Remplacer le régulateur de tension ou l'IC de gestion de l'appareil photo défectueux sur la carte mère.",
+
+        "hardware_proximity_sensor_calibration": "RAPPORT TECHNIQUE : RÉSOLUTION DU PROBLÈMES DE CAPTEUR DE PROXIMITÉ (ÉCRAN NOIR EN APPEL)\n\n" +
+                                                 "• Problème :\n" +
+                                                 "L'écran du téléphone reste noir pendant un appel téléphonique et refuse de s'rallumer en éloignant l'appareil de l'oreille.\n\n" +
+                                                 "• Solution et Étapes :\n" +
+                                                 "1. Nettoyer la poussière accumulée sous la vitre avant au niveau du capteur.\n" +
+                                                 "2. Recaler le capteur avec un nouveau cache en caoutchouc ou effectuer un étalonnage via le menu ingénieur (Engineer Mode).",
+
+        "network_volte_activation_fix": "RAPPORT TECHNIQUE : ACTIVATION ET FORÇAGE DE LA TECHNOLOGIE VoLTE (VOIX SUR LTE)\n\n" +
+                                        "• Problème :\n" +
+                                        "Baisse de la qualité audio lors des appels ou impossibilité d'utiliser Internet pendant un appel vocal.\n\n" +
+                                        "• Solution et Étapes :\n" +
+                                        "1. Activer l'option 'Appels VoLTE' dans Paramètres > Réseau mobile.\n" +
+                                        "2. Utiliser les codes de service secrets pour forcer l'IMS Registration si l'opérateur local prend en charge le service.",
+
+        "hardware_vibrator_motor_repair": "RAPPORT TECHNIQUE : DIAGNOSTIC ET RÉPARATION DU MOTEUR DE VIBRATION (TAPTIC ENGINE)\n\n" +
+                                          "• Problème :\n" +
+                                          "Le téléphone ne vibre plus lors des notifications ou des appels entrants.\n\n" +
+                                          "• Solution et Étapes :\n" +
+                                          "1. Mesurer la résistance du moteur à l'aide d'un multimètre pour détecter une bobine coupée.\n" +
+                                          "2. Vérifier les pistes de connexion sur la carte mère ou remplacer le bloc vibreur en cas d'oxydation interne.",
+
+        "network_apn_mms_gateway_fix": "RAPPORT TECHNIQUE : CORRECTION DES PASSERELLES APN POUR LA RÉCEPTION DES MMS\n\n" +
+                                       "• Problème :\n" +
+                                       "Impossibilité d'envoyer ou de recevoir des messages multimédias (MMS) malgré une connexion Internet active.\n\n" +
+                                       "• Solution et Étapes :\n" +
+                                       "1. Vérifier les paramètres du profil APN et renseigner explicitement l'URL du MMSC, la passerelle (MMS Proxy) et le port MMS fournis par l'opérateur.",
+
+        "hardware_sim_reader_pin_repair": "RAPPORT TECHNIQUE : RÉPARATION DES BROCHES DU LECTEUR DE CARTE SIM TORDUES OU CASSÉES\n\n" +
+                                          "• Problème :\n" +
+                                          "Message 'Insérer SIM' persistant ou absence de reconnaissance de la carte malgré son bon état.\n\n" +
+                                          "• Solution et Étapes :\n" +
+                                          "1. Inspecter le tiroir SIM et les broches internes du lecteur sous un microscope.\n" +
+                                          "2. Redresser délicatement les broches tordues ou remplacer entièrement le bloc lecteur de carte SIM par micro-soudure.",
+
+        "hardware_back_glass_laser_removal": "RAPPORT TECHNIQUE : DÉPOSE DE LA VITRE ARRIÈRE (BACK GLASS) PAR MACHINE LASER\n\n" +
+                                             "• Problème :\n" +
+                                             "Remplacement d'une coque arrière en verre fissurée sur les smartphones modernes (iPhone / Samsung haut de gamme).\n\n" +
+                                             "• Solution et Étapes :\n" +
+                                             "1. Utiliser une machine de découpe laser pour brûler la colle industrielle sous la vitre sans démonter entièrement le châssis.\n" +
+                                             "2. Nettoyer les résidus de colle et appliquer un adhésif étanche d'origine pour la pose de la nouvelle vitre.",
+
+        "network_dns_leak_prevention": "RAPPORT TECHNIQUE : PRÉVENTION DES FUITES DE DNS SUR LES CONNEXIONS MOBILES SÉCURISÉES\n\n" +
+                                       "• Objectif :\n" +
+                                       "Empêcher les fournisseurs d'accès Internet de voir les sites visités lors de l'utilisation de configurations réseau privées.\n\n" +
+                                       "• Solution et Étapes :\n" +
+                                       "1. Configurer un DNS privé chiffré (DNS over TLS) combiné avec un profil VPN strict.\n" +
+                                       "2. Tester l'étanchéité du réseau via des outils de test de fuite DNS en ligne.",
+
+        "hardware_water_damage_ultrasonic_clean": "RAPPORT TECHNIQUE : DÉsoxydation ET NETTOYAGE AUX ULTRASONS DES CARTES MÈRES\n\n" +
+                                                  "• Problème :\n" +
+                                                  "Appareil ayant subi une immersion dans l'eau présentant des courts-circuits et des dépôts d'oxydation verte.\n\n" +
+                                                  "• Solution et Étapes :\n" +
+                                                  "1. Démonter complètement le téléphone, retirer la batterie et placer la carte mère dans un bac à ultrasons rempli d'alcool isopropylique.\n" +
+                                                  "2. Brosser délicatement les zones corrodées, sécher à l'air chaud et traiter les composants endommagés.",
+
+        "hardware_thermistor_fake_charging_fix": "RAPPORT TECHNIQUE : RÉPARATION DE LA THERMISTANCE (FAUX MESSAGE DE TEMPÉRATURE)\n\n" +
+                                                 "• Problème :\n" +
+                                                 "Message d'avertissement 'Température de la batterie trop basse/élevée' empêchant la charge du téléphone.\n\n" +
+                                                 "• Solution et Étapes :\n" +
+                                                 "1. Localiser la résistance thermique (thermistor / circuit NTC) sur la carte mère ou la nappe de charge.\n" +
+                                                 "2. Remplacer le composant défectueux ou refaire la piste de contrôle thermique associée au circuit de charge.", 
+          
+        "hardware_tranceiver_ic_repair": "RAPPORT TECHNIQUE : RÉPARATION DE L'IC ÉMETTEUR-RÉCEPTEUR (TRANSCEIVER IC) ET RÉSEAU\n\n" +
+                                        "• Problème :\n" +
+                                        "Absence totale de signal réseau, message 'Aucun service' persistant malgré un changement de carte SIM et des paramètres APN corrects.\n\n" +
+                                        "• Solution et Étapes :\n" +
+                                        "1. Vérifier la continuité des pistes entre l'antenne principale et l'amplificateur de puissance (PA).\n" +
+                                        "2. Rebouler (reballing) ou remplacer le circuit intégré Transceiver RF endommagé sous microscope à l'aide d'une station à air chaud.",
+
+        "hardware_power_ic_boot_fix": "RAPPORT TECHNIQUE : DIAGNOSTIC ET RÉPARATION DE L'IC D'ALIMENTATION (POWER MANAGEMENT IC - PMIC)\n\n" +
+                                      "• Problème :\n" +
+                                      "Le téléphone ne s'allume pas, ne charge pas et consomme du courant en continu sur l'alimentation de laboratoire (court-circuit primaire).\n\n" +
+                                      "• Solution et Étapes :\n" +
+                                      "1. Injecter une tension basse (1.2V à 2V) pour détecter le composant qui chauffe (généralement un condensateur en court-circuit ou le PMIC).\n" +
+                                      "2. Retirer et remplacer le condensateur défectueux ou procéder au remplacement du PMIC si la puce est grillée.",
+
+        "network_advanced_vpn_protocols": "RAPPORT TECHNIQUE : CONFIGURATION ET UTILISATION AVANCÉE DES PROTOCOLES VPN SUR MOBILE\n\n" +
+                                          "• Objectif :\n" +
+                                          "Sécuriser les connexions de données, contourner les restrictions géographiques et stabiliser les transferts de fichiers pour vos applications.\n\n" +
+                                          "• Solution et Étapes :\n" +
+                                          "1. Préférer le protocole WireGuard ou OpenVPN (UDP/TCP) dans l'application VPN pour optimiser la vitesse par rapport au protocole IKEv2.\n" +
+                                          "2. Configurer le 'Kill Switch' pour couper automatiquement tout accès Internet si le tunnel VPN se déconnecte subitement.",
+
+        "network_apn_operator_deep_config": "RAPPORT TECHNIQUE : PARAMÉTRAGE AVANCÉ DES APN POUR LES DONNÉES MOBILES (MMS & INTERNET)\n\n" +
+                                           "• Problème :\n" +
+                                           "Connexion Internet instable ou impossibilité d'utiliser les données mobiles après le flashage ou le changement de ROM.\n\n" +
+                                           "• Solution et Étapes :\n" +
+                                           "1. Accéder à Paramètres > Réseau > Noms des points d'accès (APN) et créer un profil personnalisé.\n" +
+                                           "2. Configurer explicitement les champs 'MCC' et 'MNC' selon l'opérateur local, et définir le type d'APN sur 'default,supl,mms' pour garantir la compatibilité totale.",
+
+        "network_custom_dns_android_secure": "RAPPORT TECHNIQUE : IMPLÉMENTATION DE DNS SÉCURISÉS (DNS-OVER-HTTPS / TLS) SUR ANDROID\n\n" +
+                                             "• Objectif :\n" +
+                                             "Améliorer la vitesse de résolution des noms de domaine et bloquer les publicités au niveau du système sans application tierce.\n\n" +
+                                             "• Solution et Étapes :\n" +
+                                             "1. Aller dans Paramètres > Réseau > DNS privé (Private DNS).\n" +
+                                             "2. Entrer l'adresse de l'hôte du fournisseur (ex: `dns.adguard.com` pour bloquer les pubs ou `one.one.one.one` pour Cloudflare).",
+
+        "hardware_emmc_ufs_bga_reballing": "RAPPORT TECHNIQUE : REBULLING ET SOUDURE DES MÉMOIRES EMMC/UFS SUR CARTE MÈRE\n\n" +
+                                          "• Problème :\n" +
+                                          "Erreurs d'écriture, plantage aléatoire du système ou mode 'Bootloop' incurable causé par des soudures sèches sous la mémoire flash.\n\n" +
+                                          "• Solution et Étapes :\n" +
+                                          "1. Dessouder la puce eMMC/UFS avec un profil thermique adapté pour ne pas endommager le processeur (CPU).\n" +
+                                          "2. Nettoyer les pads de la carte mère à la tresse à dessouder, appliquer du flux et refaire les billes d'étain (reballing) avec un pochoir (stencil) avant la pose.",
+
+        "hardware_charging_way_jumpe": "RAPPORT TECHNIQUE : CRÉATION DE PONTS DE CHARGE (JUMPERS) SUR CIRCUIT ENDOMMAGÉ\n\n" +
+                                     "• Problème :\n" +
+                                     "Pistes de charge arrachées sur le connecteur USB (type-C ou micro-USB) suite à une chute ou un choc.\n\n" +
+                                     "• Solution et Étapes :\n" +
+                                     "1. Gratter délicatement le vernis masquant pour localiser les points de test (TP) correspondants au VBUS (positif) et à la masse (GND).\n" +
+                                     "2. Souder un fil de cuivre émaillé très fin (jumpers 0.01mm) entre le connecteur et les composants de protection (diode TVS / bobine).",
+
+        "network_wifi_mac_randomization_fix": "RAPPORT TECHNIQUE : GESTION DE L'ADRESSE MAC ALÉATOIRE ET CONNEXION WI-FI\n\n" +
+                                             "• Problème :\n" +
+                                             "Le smartphone est bloqué ou refuse de se connecter au réseau Wi-Fi d'un routeur protégé par filtrage MAC.\n\n" +
+                                             "• Solution et Étapes :\n" +
+                                             "1. Aller dans les détails de la connexion Wi-Fi enregistrée.\n" +
+                                             "2. Changer le paramètre 'Adresse MAC' de 'Utiliser une adresse aléatoire' à 'Utiliser l'adresse MAC de l'appareil' (MAC réelle).",
+
+        "hardware_lcd_touch_controller_ic": "RAPPORT TECHNIQUE : DIAGNOSTIC DE L'IC TACTILE ET DU CONTRÔLEUR D'AFFICHAGE\n\n" +
+                                             "• Problème :\n" +
+                                             "L'écran de la vitre fonctionne mais certaines zones ne répondent plus au toucher (Ghost touch ou écran mort au toucher).\n\n" +
+                                             "• Solution et Étapes :\n" +
+                                             "1. Vérifier si le problème persiste après le remplacement de la nappe de l'écran.\n" +
+                                             "2. Inspecter et refaire les soudures de la puce tactile (Touch IC) située sur la carte mère ou sur la nappe flexible de l'écran.",
+
+        "hardware_audio_codec_ic_fix": "RAPPORT TECHNIQUE : RÉPARATION DE L'IC AUDIO (CODEC) ET PROBLÈMES DE MICROPHONE/HAUT-PARLEUR\n\n" +
+                                       "• Problème :\n" +
+                                       "Absence de son lors des appels, micro inaudible ou haut-parleur muet alors que les composants de diffusion sont neufs.\n\n" +
+                                       "• Solution et Étapes :\n" +
+                                       "1. Tester la ligne audio via les codes de diagnostic (*#0*# ou équivalents).\n" +
+                                       "2. Remplacer le circuit Audio Codec IC ou refaire ses connexions micro-soudées sur la carte mère.", 
+                                         
+        "flashing_qualcomm_edl_mode": "RAPPORT TECHNIQUE : FLASHAGE DES APPAREILS QUALCOMM VIA MODE EDL (EMERGENCY DOWNLOAD)\n\n" +
+                                     "• Problème :\n" +
+                                     "Appareils Qualcomm totalement morts ('Hard Brick') ne répondant plus aux commandes Fastboot.\n\n" +
+                                     "• Solution et Étapes :\n" +
+                                     "1. Utiliser un câble EDL ou des points de test (Test Point) sur la carte mère pour forcer le mode Qualcomm 9008.\n" +
+                                     "2. Utiliser l'outil QFIL pour charger le fichier 'prog_firehose_ddr.elf' et flasher la ROM complète.",
+
+        "root_supersu_vs_magisk": "RAPPORT TECHNIQUE : DIFFÉRENCE ENTRE SUPERUSER ET MAGISK POUR LE ROOT\n\n" +
+                                  "• Analyse :\n" +
+                                  "SuperSU était le standard, mais Magisk est devenu le standard actuel pour éviter la détection par SafetyNet.\n\n" +
+                                  "• Solution :\n" +
+                                  "Toujours privilégier Magisk pour les systèmes Android 10+. Utiliser 'MagiskHide' ou 'Zygisk' pour masquer le root aux applications bancaires.",
+
+        "firmware_mtk_client_tool": "RAPPORT TECHNIQUE : UTILISATION DE MTK CLIENT POUR LE DÉVERROUILLAGE ET FLASHAGE\n\n" +
+                                   "• Objectif :\n" +
+                                   "Déverrouiller le Bootloader et supprimer les protections FRP sur les processeurs MediaTek récents sans clé matérielle (Dongle).\n\n" +
+                                   "• Solution :\n" +
+                                   "Utiliser le script Python 'mtk_client' via ligne de commande pour lire/écrire directement les partitions (Preloader, Boot, System).",
+
+        "souris_dpi_sensitivity_fix": "RAPPORT TECHNIQUE : AJUSTEMENT DE LA SENSIBILITÉ (DPI) DE LA SOURIS SOUS WINDOWS\n\n" +
+                                      "• Problème :\n" +
+                                      "Curseur trop lent ou trop rapide lors de travaux de précision (micro-soudure ou design).\n\n" +
+                                      "• Solution :\n" +
+                                      "1. Régler via les paramètres Windows (Options de pointeur).\n" +
+                                      "2. Pour les souris gamer, installer le logiciel spécifique du constructeur pour ajuster le taux de rafraîchissement (Polling Rate) et le DPI matériel.",
+
+        "os_android_x86_pc": "RAPPORT TECHNIQUE : INSTALLATION D'ANDROID X86 SUR UN ORDINATEUR PC\n\n" +
+                             "• Objectif :\n" +
+                             "Transformer un vieil ordinateur portable en une station Android pour tester vos applications (ByaoIA).\n\n" +
+                             "• Solution :\n" +
+                             "Créer une clé USB bootable avec l'ISO Android-x86. Installer sur une partition ext4 pour de meilleures performances de lecture/écriture.",
+
+        "firmware_backup_nandroid": "RAPPORT TECHNIQUE : CRÉATION D'UNE SAUVEGARDE NANDROID COMPLÈTE\n\n" +
+                                   "• Importance :\n" +
+                                   "Sauvegarder l'état exact du système (ROM, Data, Recovery) avant toute modification risquée.\n\n" +
+                                   "• Solution :\n" +
+                                   "Démarrer en Recovery personnalisé (TWRP), sélectionner 'Backup', cocher toutes les partitions (Boot, System, Data, EFS) et stocker sur carte SD ou OTG.",
+
+        "flashing_bootloader_unlock_oppo": "RAPPORT TECHNIQUE : DÉVERROUILLAGE BOOTLOADER SUR OPPO (COLOROS)\n\n" +
+                                          "• Problème :\n" +
+                                          "La plupart des modèles Oppo restreignent strictement le déverrouillage via l'application 'Deep Testing'.\n\n" +
+                                          "• Solution :\n" +
+                                          "Utiliser des versions spécifiques de l'APK 'Deep Testing' correspondant à la région du firmware pour soumettre la demande de déverrouillage.",
+
+        "os_linux_kali_pentest": "RAPPORT TECHNIQUE : INSTALLATION DE KALI LINUX POUR LE TEST D'INTRUSION RÉSEAU\n\n" +
+                                 "• Objectif :\n" +
+                                 "Utiliser des outils comme Aircrack-ng ou Wireshark pour auditer la sécurité des réseaux Wi-Fi de vos clients.\n\n" +
+                                 "• Solution :\n" +
+                                 "Installer en mode 'Live USB avec persistance' pour garder vos outils et captures de données entre deux sessions.",
+
+        "root_unroot_methods": "RAPPORT TECHNIQUE : MÉTHODES POUR ANNULER LE ROOT (UNROOT)\n\n" +
+                               "• Problème :\n" +
+                               "Besoin de restaurer le téléphone à l'état d'usine pour une mise à jour OTA ou une revente.\n\n" +
+                               "• Solution :\n" +
+                               "1. Dans l'application Magisk, sélectionner 'Désinstaller Magisk' -> 'Restaurer les images'.\n" +
+                               "2. Alternativement, reflasher la ROM officielle via SP Flash Tool ou Odin pour écraser totalement la partition système.",
+
+        "system_service_optimization": "RAPPORT TECHNIQUE : OPTIMISATION DES SERVICES DE DÉMARRAGE SUR WINDOWS\n\n" +
+                                      "• Problème :\n" +
+                                      "Lenteur au démarrage due à trop de logiciels lancés en arrière-plan.\n\n" +
+                                      "• Solution :\n" +
+                                      "1. Utiliser 'Gestionnaire des tâches' (Ctrl+Shift+Esc) > Onglet 'Démarrage'.\n" +
+                                      "2. Désactiver tous les services non critiques au démarrage pour accélérer la mise à disposition de la machine.", 
+               
+        "flashing_sp_flash_tool_guide": "RAPPORT TECHNIQUE : GUIDE COMPLET DE FLASHAGE VIA SP FLASH TOOL\n\n" +
+                                        "• Problème :\n" +
+                                        "Appareils MediaTek bloqués sur le logo ou briqués suite à une mise à jour corrompue.\n\n" +
+                                        "• Solution et Étapes :\n" +
+                                        "1. Télécharger le fichier Scatter de la ROM officielle correspondante.\n" +
+                                        "2. Charger le scatter dans SP Flash Tool, sélectionner 'Download Only' ou 'Firmware Upgrade', connecter l'appareil éteint en maintenat les boutons de volume.",
+
+        "root_magisk_patch_boot": "RAPPORT TECHNIQUE : ROOTER UN ANDROID VIA MAGISK ET PATCH BOOT.IMG\n\n" +
+                                  "• Objectif :\n" +
+                                  "Obtenir les privilèges superutilisateur (Root) en toute sécurité sans modifier irrémédiablement la partition system.\n\n" +
+                                  "• Solution et Étapes :\n" +
+                                  "1. Extraire le fichier 'boot.img' de la firmware officielle de l'appareil.\n" +
+                                  "2. Le transférer sur le téléphone, l'patcher via l'application Magisk Manager, puis flasher le nouveau fichier patché via Fastboot avec la commande 'fastboot flash boot magisk_patched.img'.",
+
+        "firmware_odin_samsung": "RAPPORT TECHNIQUE : INSTALLATION DE FIRMWARE SAMSUNG VIA ODIN\n\n" +
+                                 "• Problème :\n" +
+                                 "Réinstallation propre du système d'exploitation ou débrickage des smartphones Samsung Galaxy.\n\n" +
+                                 "• Solution et Étapes :\n" +
+                                 "1. Mettre le téléphone en Download Mode (combinaison de touches ou câble USB adéquat).\n" +
+                                 "2. Assigner les fichiers BL, AP, CP, et CSC (utiliser HOME_CSC pour conserver les données ou CSC_*** pour un formatage complet) dans Odin, puis lancer le flash.",
+
+        "souris_bluetooth_pairing_fix": "RAPPORT TECHNIQUE : RÉSOLUTION DES PROBLÈMES DE CONNEXION DE SOURIS BLUETOOTH\n\n" +
+                                       "• Problème :\n" +
+                                       "La souris sans fil se déconnecte constamment ou n'est pas reconnue par le PC ou la tablette.\n\n" +
+                                       "• Solution et Étapes :\n" +
+                                       "1. Supprimer l'appareil de la liste des équipements couplés, puis réinitialiser la souris (bouton de synchro).\n" +
+                                       "2. Désactiver l'option d'économie d'énergie pour le contrôleur Bluetooth dans le Gestionnaire de périphériques Windows.",
+
+        "os_dual_boot_windows_linux": "RAPPORT TECHNIQUE : CONFIGURATION DUAL-BOOT WINDOWS ET LINUX\n\n" +
+                                      "• Objectif :\n" +
+                                      "Faire cohabiter deux systèmes d'exploitation différents sur un même disque dur d'ordinateur.\n\n" +
+                                      "• Solution et Étapes :\n" +
+                                      "1. Créer une partition non allouée dédiée au système Linux.\n" +
+                                      "2. Installer Linux en configurant correctement le chargeur de démarrage GRUB pour qu'il détecte le gestionnaire de démarrage Windows au démarrage.",
+
+        "os_linux_ubuntu_commands": "RAPPORT TECHNIQUE : COMMANDES ESSENTIELLES SOUS LINUX UBUNTU POUR LA MAINTENANCE\n\n" +
+                                    "• Objectif :\n" +
+                                    "Gérer les paquets, les mises à jour et les permissions du système d'exploitation Linux.\n\n" +
+                                    "• Solution et Étapes :\n" +
+                                    "1. Utiliser 'sudo apt update && sudo apt upgrade -y' pour actualiser l'ensemble des logiciels.\n" +
+                                    "2. Utiliser 'sudo systemctl restart networking' pour réinitialiser les services réseau en cas de coupure.",
+
+        "firmware_fastboot_xiaomi": "RAPPORT TECHNIQUE : FLASHAGE DES ROMS OFFICIELLES XIAOMI EN MODE FASTBOOT\n\n" +
+                                    "• Problème :\n" +
+                                    "Récupération d'un téléphone Xiaomi bloqué en Bootloop ou nécessité de changer de région de ROM.\n\n" +
+                                    "• Solution et Étapes :\n" +
+                                    "1. Déverrouiller le Bootloader au préalable.\n" +
+                                    "2. Télécharger la Fastboot ROM (.tgz), l'extraire, puis exécuter le script 'flash_all.bat' via l'outil officiel Mi Flash Tool sur PC.",
+
+        "root_twrp_recovery_install": "RAPPORT TECHNIQUE : INSTALLATION D'UN RECOVERY PERSONNALISÉ (TWRP)\n\n" +
+                                      "• Objectif :\n" +
+                                      "Créer des sauvegardes complètes (Nandroid Backup) et flasher des zips personnalisés.\n\n" +
+                                      "• Solution et Étapes :\n" +
+                                      "1. Connecter le téléphone en mode Fastboot sur le PC.\n" +
+                                      "2. Exécuter la commande 'fastboot flash recovery twrp.img' puis redémarrer immédiatement en maintenant les touches pour charger le menu TWRP.",
+
+        "souris_usb_not_detected": "RAPPORT TECHNIque : RÉPARATION D'UNE SOURIS FILAIRE USB NON RECONNUE\n\n" +
+                                   "• Problème :\n" +
+                                   "Le curseur de la souris ne bouge pas et le port USB semble inactif.\n\n" +
+                                   "• Solution et Étapes :\n" +
+                                   "1. Tester la souris sur un autre port USB ou une autre machine pour écarter un défaut matériel du câble.\n" +
+                                   "2. Désinstaller les pilotes 'USB Root Hub' dans le Gestionnaire de périphériques et redémarrer l'ordinateur.",
+
+        "os_windows_pe_boot": "RAPPORT TECHNIQUE : UTILISATION D'UN SYSTÈMED'EXPLOITATION DE SECOURS (WINDOWS PE)\n\n" +
+                              "• Objectif :\n" +
+                              "Récupérer des données ou réparer un disque système endommagé sans lancer le Windows principal.\n\n" +
+                              "• Solution et Étapes :\n" +
+                              "1. Créer une clé USB bootable contenant un environnement Windows PE ou Hiren's BootCD.\n" +
+                              "2. Démarrer l'ordinateur sur la clé USB pour accéder aux outils de diagnostic et de sauvegarde de fichiers.", 
+                 
+        "frp_itel_unisoc": "RIPOTI YA KIELEKTRONIKI: KUVUNJA FRP KWA SIMU ZA ITEL ZENYE CHIP YA UNISOC\n\n" +
+                         "• Tatizo:\n" +
+                         "Simu za Itel zinazotumia Unisoc kushindwa kupitika kwenye akaunti ya Google baada ya Hard Reset.\n\n" +
+                         "• Suluhu na Hatua:\n" +
+                         "1. Tumia njia ya TalkBack au kuingia kupitia mipangilio ya lugha na kibodi.\n" +
+                         "2. Tumia zana za ufundi za kompyuta zenye uwezo wa kusoma Unisoc Diag/Bootrom mode kufanya 'Reset FRP' moja kwa moja.",
+
+        "hard_reset_realme_ui": "RIPOTI YA KIELEKTRONIKI: KUFANYA HARD RESET KWA SIMU ZA REALME ZENYE REALME UI\n\n" +
+                               "• Tatizo:\n" +
+                               "Simu kusahau nenosiri na kushindwa kuingia kwenye mfumo wa kawaida.\n\n" +
+                               "• Suluhu na Hatua:\n" +
+                               "1. Zima simu kabisa, kisha bonyeza kitufe cha kushusha sauti (Volume Down) na Power kwa pamoja.\n" +
+                               "2. Wakati nembo ya Realme inatokea, acha kitufe cha Power huku ukiendelea kushikilia Volume Down hadi uingie Recovery, kisha chagua 'Format data' na uweke nambari ya uthibitisho inayotokea kwenye skrini.",
+
+        "whatsapp_linked_devices_limit": "RIPOTI YA KIELEKTRONIKI: KUTATUA KIKOMO CHA VIFAA VILIVYOUNGANISHWA KWENYE WHATSAPP\n\n" +
+                                        "• Tatizo:\n" +
+                                        "Kushindwa kuunganisha kifaa kipya kwenye WhatsApp Web au kompyuta ya ufundi kutokana na kutimia kwa kikomo cha vifaa vinavyoruhusiwa.\n\n" +
+                                        "• Suluhu na Hatua:\n" +
+                                        "1. Nenda WhatsApp Settings > Linked Devices kwenye simu yako.\n" +
+                                        "2. Futa (Log out) vifaa ambavyo huvitumii au ambavyo huvitambui ili kutoa nafasi kwa kifaa chako kipya.",
+
+        "pc_utility_winrar_repair": "RIPOTI YA KIELEKTRONIKI: KUREKEBISHA MAFAILI YALIYOHARIBIKA YA FIRMWARE (RAR/ZIP REPAIR)\n\n" +
+                                   "• Matumizi:\n" +
+                                   "Kufungua mafaili ya mfumo yanayoleta ujumbe wa 'Archive is corrupt' wakati wa kuyatoa.\n\n" +
+                                   "• Suluhu na Hatua:\n" +
+                                   "1. Fungua programu ya WinRAR, nenda kwenye eneo lilipo faili lililoharibika.\n" +
+                                   "2. Chagua faili hilo kisha bonyeza kitufe cha 'Repair' kilichopo kwenye menyu ya juu ili kujaribu kuokoa data zilizomo ndani.",
+
+        "secret_codes_realme_oppo": "RIPOTI YA KIELEKTRONIKI: MISIMBO YA SIRI YA KUPIMA SIMU ZA REALME\n\n" +
+                                    "• Matumizi:\n" +
+                                    "Kupima ubora wa skrini, sauti, na mtandao kwenye simu za Realme kabla ya kutoa huduma.\n\n" +
+                                    "• Suluhu na Hatua:\n" +
+                                    "1. Piga *#899# ili kufungua EngineerMode ya Realme na kufanya majaribio ya mikono (Manual Test) kwa kila kifaa cha ndani.",
+
+        "network_ipv4_gateway_fix": "RIPOTI YA KIELEKTRONIKI: KUREKEBISHA ANWANI YA DEFAULT GATEWAY KWENYE PC\n\n" +
+                                   "• Tatizo:\n" +
+                                   "Kompyuta kuunganisha kwenye Wi-Fi lakini kuandika 'No Internet, Secured' kutokana na kukosa njia sahihi ya kutoka kwenda mtandaoni.\n\n" +
+                                   "• Suluhu na Hatua:\n" +
+                                   "1. Fungua Command Prompt na uandike 'ipconfig' kuangalia Default Gateway.\n" +
+                                   "2. Fanya 'ipconfig /release' ikifuatiwa na 'ipconfig /renew' ili kuomba anwani mpya kutoka kwenye router.",
+
+        "special_tecno_pop_charging": "RIPOTI YA KIELEKTRONIKI: KUTATUA TECNO POP INAYOGOMA KUCHAJI AU KUSHUKA CHAJI\n\n" +
+                                     "• Tatizo:\n" +
+                                     "Simu kuonyesha alama ya kuchaji lakini asilimia hazipandi au kupungua wakati imechomekwa.\n\n" +
+                                     "• Suluhu na Hatua:\n" +
+                                     "1. Safisha bandari ya USB (Charging Port) kwa kutumia brashi na pombe ya viwandani kuondoa uchafu.\n" +
+                                     "2. Pima 'Charging IC' na ubadilishe waya mdogo wa mkondo au 'Charging Flex Ribbon' ikiwa imekatika ndani.",
+
+        "electronic_relay_nodemcu_blynk": "RIPOTI YA KIELEKTRONIKI: KUUNGANISHA NODEMCU NA BLYNK APP KWA UDHIBITI WA MBALI\n\n" +
+                                          "• Matumizi:\n" +
+                                          "Kutengeneza mfumo wa物联网 (IoT) wa kudhibiti vifaa vya kielektroniki popote ulipo duniani kupitia simu.\n\n" +
+                                          "• Suluhu na Hatua:\n" +
+                                          "1. Sajili mradi kwenye Blynk Cloud na upate Auth Token.\n" +
+                                          "2. Weka Token hiyo kwenye msimbo wa Arduino IDE pamoja na jina na nenosiri la Wi-Fi yako.",
+
+        "whatsapp_clear_chat_history": "RIPOTI YA KIELEKTRONIKI: KUSAFISHA MAZUNGUMZO YA ZAMANI ILI KUONGEZA NAFASI WHATSAPP\n\n" +
+                                      "• Tatizo:\n" +
+                                      "Programu kuchukua nafasi kubwa kwenye simu na kuwa nzito wakati wa kufungua.\n\n" +
+                                      "• Suluhu na Hatua:\n" +
+                                      "1. Nenda WhatsApp Settings > Chats > Chat History.\n" +
+                                      "2. Chagua 'Clear all chats' au 'Delete all chats' ukizingatia kuwa unataka kufuta kumbukumbu zote zisizo za lazima.",
+
+        "network_mac_address_spoofing": "RIPOTI YA KIELEKTRONIKI: KUBADILISHA ANWANI YA MAC YA KOMPYUTA (MAC SPOOFING)\n\n" +
+                                        "• Matumizi:\n" +
+                                        "Kupata ruhusa ya kuingia kwenye mtandao unaochagua vifaa kwa kutumia anwani ya MAC.\n\n" +
+                                        "• Suluhu na Hatua:\n" +
+                                        "1. Nenda kwenye Device Manager > Network Adapters > Properties > Advanced.\n" +
+                                        "2. Tafuta 'Network Address' au 'MAC Address' na uweke thamani mpya ya namba unayotaka kuitumia.", 
+                  
+        "frp_tecno_unisoc": "RIPOTI YA KIELEKTRONIKI: KUVUNJA FRP KWA SIMU ZA TECNO ZENYE CHIP YA UNISOC\n\n" +
+                           "• Tatizo:\n" +
+                           "Simu za Tecno zinazotumia kichakataji cha Unisoc (SC9863A n.k.) kushindwa kuondolewa akaunti ya Google kwa njia za kawaida.\n\n" +
+                           "• Suluhu na Hatua:\n" +
+                           "1. Tumia zana za ufundi za PC zinazosaidia Unisoc Research Download au Factory Download.\n" +
+                           "2. Chomeka simu huku umeshikilia vifungo vya sauti (Volume Up na Down kwa pamoja) ili kuingiza kifaa kwenye 'Unisoc Bootrom Mode'.",
+
+        "hard_reset_itel_vision": "RIPOTI YA KIELEKTRONIKI: KUFANYA HARD RESET KWA SIMU ZA ITEL VISION SERIES\n\n" +
+                                 "• Tatizo:\n" +
+                                 "Simu kusahau nenosiri la kufuli au pattern na kukataa kuingia kwenye mfumo.\n\n" +
+                                 "• Suluhu na Hatua:\n" +
+                                 "1. Zima simu kabisa, kisha bonyeza kitufe cha kuongeza sauti (Volume Up) na Power kwa wakati mmoja.\n" +
+                                 "2. Mara nembo ya Itel inapojitokeza, acha kitufe cha Power lakini endelea kushikilia Volume Up hadi uone menyu ya Recovery, kisha futa data kupitia 'Wipe data/factory reset'.",
+
+        "whatsapp_backup_restore_fix": "RIPOTI YA KIELEKTRONIKI: KUTATUA KUSHINDWA KUREJESHA BACKUP YA WHATSAPP (GOOGLE DRIVE)\n\n" +
+                                       "• Tatizo:\n" +
+                                       "Ujumbe wa 'Looking for backups' ukiganda au kushindwa kupata ujumbe wa zamani wakati wa kusakinisha WhatsApp upya.\n\n" +
+                                       "• Suluhu na Hatua:\n" +
+                                       "1. Hakikisha umeingia kwenye akaunti sahihi ya Google (Gmail) na namba ya simu ile ile iliyotumika kutengeneza backup.\n" +
+                                       "2. Angalia kama kuna nafasi ya kutosha kwenye hifadhi ya simu na kama mtandao wa Wi-Fi uko imara.",
+
+        "pc_utility_7zip_extraction": "RIPOTI YA KIELEKTRONIKI: KUTUMIA 7-ZIP KUFUNGUA MAFAILI YALIYOBANWA (FIRMWARE ARCHIVES)\n\n" +
+                                     "• Matumizi:\n" +
+                                     "Kutoa mafaili ya mfumo wa simu (ZIP, RAR, 7Z, TAR) yaliyoshushwa kutoka mtandaoni kwa ajili ya kazi za ufundi.\n\n" +
+                                     "• Suluhu na Hatua:\n" +
+                                     "1. Sakinisha programu ya 7-Zip kwenye PC yako.\n" +
+                                     "2. Bonyeza kulia kwenye faili la firmware, chagua '7-Zip' kisha 'Extract to...' ili kupata mafaili kamili ya kuweka kwenye simu.",
+
+        "secret_codes_itel_tecno": "RIPOTI YA KIELEKTRONIKI: MISIMBO YA SIRI YA KUPIMA SIMU ZA ITEL NA TECNO\n\n" +
+                                   "• Matumizi:\n" +
+                                   "Kupima vipengele vya maunzi (Hardware Testing) kama vile sauti, kamera, na mtetemo kabla ya kumkabidhi mteja simu yake.\n\n" +
+                                   "• Suluhu na Hatua:\n" +
+                                   "1. Piga *#*#3333#*#* au *#90# kulingana na toleo la mfumo wa Tecno au Itel ili kufungua menyu ya majaribio ya siri.",
+
+        "network_wifi_ip_conflict": "RIPOTI YA KIELEKTRONIKI: KUTATUA MGONGANO WA ANWANI ZA IP KUBWA KWENYE MTANDAO\n\n" +
+                                   "• Tatizo:\n" +
+                                   "Kompyuta au simu kuandika 'IP Address Conflict' na kushindwa kupata intaneti kwenye mtandao wa eneo lako (LAN).\n\n" +
+                                   "• Suluhu na Hatua:\n" +
+                                   "1. Weka anwani ya IP ya kudumu (Static IP) kwenye kifaa chako badala ya kusubiri DHCP.\n" +
+                                   "2. Anzisha upya (Restart) router au switch inayomiliki mtandao huo.",
+
+        "special_samsung_knox_guard": "RIPOTI YA KIELEKTRONIKI: KUTATUA VIKWAZO VYA SAMSUNG KNOX GUARD KWA SIMU ZA MADENI\n\n" +
+                                     "• Tatizo:\n" +
+                                     "Simu kujifunga yenyewe na kuonyesha ujumbe wa kudaiwa fedha au ulinzi wa kampuni (Knox Enrollment).\n\n" +
+                                     "• Suluhu na Hatua:\n" +
+                                     "1. Njia rasmi inahitaji kukamilisha malipo au kusajili upya kifaa kupitia mtoa huduma.\n" +
+                                     "2. Kwa upande wa kiufundi, zinahitajika zana maalum za kuzuia mifumo ya usuli ya MDM kupitia mfumo wa Custom ROM au Test Point.",
+
+        "electronic_relay_bluetooth_hc05": "RIPOTI YA KIELEKTRONIKI: KUDHIBITI VIFAA KUPITIA BLUETOOTH NA MODULI YA HC-05\n\n" +
+                                           "• Matumizi:\n" +
+                                           "Kuwasha vifaa vya umeme kwa kutuma amri kupitia simu ya mkononi ya Android.\n\n" +
+                                           "• Suluhu na Hatua:\n" +
+                                           "1. Unganisha moduli ya HC-05 kwenye pini za Serial za Arduino au microcontroller.\n" +
+                                           "2. Tumia programu ya simu ya Bluetooth Terminal kutuma herufi maalum (mfano 'A' kuwasha, 'B' kuzima relay).",
+
+        "whatsapp_storage_cache_clear": "RIPOTI YA KIELEKTRONIKI: KUSAFISHA KILEMA CHA CACHE YA WHATSAPP ILI KUONGEZA KASI\n\n" +
+                                        "• Tatizo:\n" +
+                                        "Programu ya WhatsApp kuwa nzito au kuchelewa kufungua jumbe.\n\n" +
+                                        "• Suluhu na Hatua:\n" +
+                                        "1. Nenda kwenye Android Settings > Apps > WhatsApp > Storage.\n" +
+                                        "2. Bonyeza 'Clear Cache' (kumbuka: usibonyeze Clear Data isipokuwa kama umehifadhi mazungumzo yako ili kuepuka kupoteza kumbukumbu).",
+
+        "network_ping_troubleshooting": "RIPOTI YA KIELEKTRONIKI: KUTUMIA AMRI YA PING KUPIMA UIMARA WA MTANDAO\n\n" +
+                                        "• Matumizi:\n" +
+                                        "Kujua kama kuna mawasiliano thabiti kati ya kompyuta yako na seva ya mbali au tovuti unayotaka kufikia.\n\n" +
+                                        "• Suluhu na Hatua:\n" +
+                                        "1. Fungua Command Prompt kwenye Windows.\n" +
+                                        "2. Andika amri kama 'ping 8.8.8.8 -t' ili kuona kama kuna upotevu wa data (Packet Loss) kwenye mtandao wako.", 
+                  
+        "frp_tecno_unisoc": "RIPOTI YA KIELEKTRONIKI: KUVUNJA FRP KWA SIMU ZA TECNO ZENYE CHIP YA UNISOC\n\n" +
+                           "• Tatizo:\n" +
+                           "Simu za Tecno zinazotumia kichakataji cha Unisoc (SC9863A n.k.) kushindwa kuondolewa akaunti ya Google kwa njia za kawaida.\n\n" +
+                           "• Suluhu na Hatua:\n" +
+                           "1. Tumia zana za ufundi za PC zinazosaidia Unisoc Research Download au Factory Download.\n" +
+                           "2. Chomeka simu huku umeshikilia vifungo vya sauti (Volume Up na Down kwa pamoja) ili kuingiza kifaa kwenye 'Unisoc Bootrom Mode'.",
+
+        "hard_reset_itel_vision": "RIPOTI YA KIELEKTRONIKI: KUFANYA HARD RESET KWA SIMU ZA ITEL VISION SERIES\n\n" +
+                                 "• Tatizo:\n" +
+                                 "Simu kusahau nenosiri la kufuli au pattern na kukataa kuingia kwenye mfumo.\n\n" +
+                                 "• Suluhu na Hatua:\n" +
+                                 "1. Zima simu kabisa, kisha bonyeza kitufe cha kuongeza sauti (Volume Up) na Power kwa wakati mmoja.\n" +
+                                 "2. Mara nembo ya Itel inapojitokeza, acha kitufe cha Power lakini endelea kushikilia Volume Up hadi uone menyu ya Recovery, kisha futa data kupitia 'Wipe data/factory reset'.",
+
+        "whatsapp_backup_restore_fix": "RIPOTI YA KIELEKTRONIKI: KUTATUA KUSHINDWA KUREJESHA BACKUP YA WHATSAPP (GOOGLE DRIVE)\n\n" +
+                                       "• Tatizo:\n" +
+                                       "Ujumbe wa 'Looking for backups' ukiganda au kushindwa kupata ujumbe wa zamani wakati wa kusakinisha WhatsApp upya.\n\n" +
+                                       "• Suluhu na Hatua:\n" +
+                                       "1. Hakikisha umeingia kwenye akaunti sahihi ya Google (Gmail) na namba ya simu ile ile iliyotumika kutengeneza backup.\n" +
+                                       "2. Angalia kama kuna nafasi ya kutosha kwenye hifadhi ya simu na kama mtandao wa Wi-Fi uko imara.",
+
+        "pc_utility_7zip_extraction": "RIPOTI YA KIELEKTRONIKI: KUTUMIA 7-ZIP KUFUNGUA MAFAILI YALIYOBANWA (FIRMWARE ARCHIVES)\n\n" +
+                                     "• Matumizi:\n" +
+                                     "Kutoa mafaili ya mfumo wa simu (ZIP, RAR, 7Z, TAR) yaliyoshushwa kutoka mtandaoni kwa ajili ya kazi za ufundi.\n\n" +
+                                     "• Suluhu na Hatua:\n" +
+                                     "1. Sakinisha programu ya 7-Zip kwenye PC yako.\n" +
+                                     "2. Bonyeza kulia kwenye faili la firmware, chagua '7-Zip' kisha 'Extract to...' ili kupata mafaili kamili ya kuweka kwenye simu.",
+
+        "secret_codes_itel_tecno": "RIPOTI YA KIELEKTRONIKI: MISIMBO YA SIRI YA KUPIMA SIMU ZA ITEL NA TECNO\n\n" +
+                                   "• Matumizi:\n" +
+                                   "Kupima vipengele vya maunzi (Hardware Testing) kama vile sauti, kamera, na mtetemo kabla ya kumkabidhi mteja simu yake.\n\n" +
+                                   "• Suluhu na Hatua:\n" +
+                                   "1. Piga *#*#3333#*#* au *#90# kulingana na toleo la mfumo wa Tecno au Itel ili kufungua menyu ya majaribio ya siri.",
+
+        "network_wifi_ip_conflict": "RIPOTI YA KIELEKTRONIKI: KUTATUA MGONGANO WA ANWANI ZA IP KUBWA KWENYE MTANDAO\n\n" +
+                                   "• Tatizo:\n" +
+                                   "Kompyuta au simu kuandika 'IP Address Conflict' na kushindwa kupata intaneti kwenye mtandao wa eneo lako (LAN).\n\n" +
+                                   "• Suluhu na Hatua:\n" +
+                                   "1. Weka anwani ya IP ya kudumu (Static IP) kwenye kifaa chako badala ya kusubiri DHCP.\n" +
+                                   "2. Anzisha upya (Restart) router au switch inayomiliki mtandao huo.",
+
+        "special_samsung_knox_guard": "RIPOTI YA KIELEKTRONIKI: KUTATUA VIKWAZO VYA SAMSUNG KNOX GUARD KWA SIMU ZA MADENI\n\n" +
+                                     "• Tatizo:\n" +
+                                     "Simu kujifunga yenyewe na kuonyesha ujumbe wa kudaiwa fedha au ulinzi wa kampuni (Knox Enrollment).\n\n" +
+                                     "• Suluhu na Hatua:\n" +
+                                     "1. Njia rasmi inahitaji kukamilisha malipo au kusajili upya kifaa kupitia mtoa huduma.\n" +
+                                     "2. Kwa upande wa kiufundi, zinahitajika zana maalum za kuzuia mifumo ya usuli ya MDM kupitia mfumo wa Custom ROM au Test Point.",
+
+        "electronic_relay_bluetooth_hc05": "RIPOTI YA KIELEKTRONIKI: KUDHIBITI VIFAA KUPITIA BLUETOOTH NA MODULI YA HC-05\n\n" +
+                                           "• Matumizi:\n" +
+                                           "Kuwasha vifaa vya umeme kwa kutuma amri kupitia simu ya mkononi ya Android.\n\n" +
+                                           "• Suluhu na Hatua:\n" +
+                                           "1. Unganisha moduli ya HC-05 kwenye pini za Serial za Arduino au microcontroller.\n" +
+                                           "2. Tumia programu ya simu ya Bluetooth Terminal kutuma herufi maalum (mfano 'A' kuwasha, 'B' kuzima relay).",
+
+        "whatsapp_storage_cache_clear": "RIPOTI YA KIELEKTRONIKI: KUSAFISHA KILEMA CHA CACHE YA WHATSAPP ILI KUONGEZA KASI\n\n" +
+                                        "• Tatizo:\n" +
+                                        "Programu ya WhatsApp kuwa nzito au kuchelewa kufungua jumbe.\n\n" +
+                                        "• Suluhu na Hatua:\n" +
+                                        "1. Nenda kwenye Android Settings > Apps > WhatsApp > Storage.\n" +
+                                        "2. Bonyeza 'Clear Cache' (kumbuka: usibonyeze Clear Data isipokuwa kama umehifadhi mazungumzo yako ili kuepuka kupoteza kumbukumbu).",
+
+        "network_ping_troubleshooting": "RIPOTI YA KIELEKTRONIKI: KUTUMIA AMRI YA PING KUPIMA UIMARA WA MTANDAO\n\n" +
+                                        "• Matumizi:\n" +
+                                        "Kujua kama kuna mawasiliano thabiti kati ya kompyuta yako na seva ya mbali au tovuti unayotaka kufikia.\n\n" +
+                                        "• Suluhu na Hatua:\n" +
+                                        "1. Fungua Command Prompt kwenye Windows.\n" +
+                                        "2. Andika amri kama 'ping 8.8.8.8 -t' ili kuona kama kuna upotevu wa data (Packet Loss) kwenye mtandao wako.", 
+              
+        "frp_realme_mediatek": "RIPOTI YA KIELEKTRONIKI: KUVUNJA FRP KWA SIMU ZA REALME (MTK)\n\n" +
+                             "• Tatizo:\n" +
+                             "Simu za Realme zilizofanyiwa Hard Reset kushindwa kupita ukurasa wa Google Verification.\n\n" +
+                             "• Suluhu na Hatua:\n" +
+                             "1. Tumia njia ya kuingia kwenye TalkBack kupitia kuweka mipangilio ya mtandao wa Wi-Fi.\n" +
+                             "2. Tumia zana za PC kufanya 'Bypass FRP' kwa kuchagua kichakataji maalum cha MediaTek (MT6765/MT6768 n.k.).",
+
+        "hard_reset_huawei_emui": "RIPOTI YA KIELEKTRONIKI: KUFANYA HARD RESET KWA SIMU ZA HUAWEI ZENYE EMUI\n\n" +
+                                 "• Tatizo:\n" +
+                                 "Simu kusahau nenosiri na kushindwa kuwaka kawaida.\n\n" +
+                                 "• Suluhu na Hatua:\n" +
+                                 "1. Zima simu, kisha bonyeza kitufe cha kuongeza sauti (Volume Up) na Power kwa pamoja hadi nembo ya Huawei itokee.\n" +
+                                 "2. Acha kitufe cha Power lakini endelea kushikilia Volume Up hadi uingie kwenye eRecovery/Recovery menu, kisha chagua 'Clear data / Factory reset'.",
+
+        "whatsapp_business_catalog_fix": "RIPOTI YA KIELEKTRONIKI: KUTATUA BIDhaa KUKWAMA KWENYE WHATSAPP BUSINESS CATALOG\n\n" +
+                                        "• Tatizo:\n" +
+                                        "Picha za bidhaa zilizowekwa kwenye katalogi kukataa kuonekana kwa wateja.\n\n" +
+                                        "• Suluhu na Hatua:\n" +
+                                        "1. Angalia ukubwa wa picha; hakikisha hazizidi kiwango kinachoruhusiwa na hazina ubora mkubwa kupita kiasi unaochelewesha upakiaji.\n" +
+                                        "2. Sasisha programu ya WhatsApp Business kwenda toleo jipya kabisa kupitia Play Store.",
+
+        "pc_utility_crystaldiskinfo": "RIPOTI YA KIELEKTRONIKI: KUPIMA AFYA YA DISKI NGUMU (HDD/SSD HEALTH)\n\n" +
+                                     "• Matumizi:\n" +
+                                     "Kutambua kama diski ya kompyuta iko karibu kuharibika kabla haijapoteza data zako za ufundi.\n\n" +
+                                     "• Suluhu na Hatua:\n" +
+                                     "1. Pakua na usakinishe programu ya CrystalDiskInfo kwenye PC.\n" +
+                                     "2. Angalia hali ya afya (Health Status): Ikiwa inaonyesha 'Good', ni salama; ikiwa ni 'Caution' au 'Bad', badilisha diski hiyo mara moja.",
+
+        "secret_codes_huawei": "RIPOTI YA KIELEKTRONIKI: MISIMBO YA SIRI YA KUPIMA SIMU ZA HUAWEI\n\n" +
+                              "• Matumizi:\n" +
+                              "Kupima ubora wa vipengele vya ndani vya simu za Huawei.\n\n" +
+                              "• Suluhu na Hatua:\n" +
+                              "1. Piga *#*#2846579#*#* ili kufungua ProjectMenu ya Huawei.\n" +
+                              "2. Angalia taarifa za betri, mtandao, na kufanya majaribio ya vifaa vya ndani (Network Information, Vendor Country).",
+
+        "network_fix_no_service": "RIPOTI YA KIELEKTRONIKI: KUTATUA TATIZO LA 'NO SERVICE' KWENYE SIMU\n\n" +
+                                 "• Tatizo:\n" +
+                                 "Simu kuandika 'No Service' au 'Emergency Calls Only' licha ya kuwa na laini iliyosajiliwa.\n\n" +
+                                 "• Suluhu na Hatua:\n" +
+                                 "1. Nenda kwenye Network Operators na uchague mtandao wako kwa mkono (Manual Search).\n" +
+                                 "2. Angalia kama IMEI namba iko sawa (kama haijasomeka 'Invalid IMEI') na kama waya wa antena ndani ya simu umeunganishwa vizuri.",
+
+        "special_infinix_hot_restart": "RIPOTI YA KIELEKTRONIKI: KUTATUA INFINIX HOT INAYOJIZIMA NA KUWAKA YENYEWE (BOOTLOOP)\n\n" +
+                                       "• Tatizo:\n" +
+                                       "Simu kuwaka hadi kwenye jina la Infinix kisha kujirudia yenyewe bila kuwaka kamili.\n\n" +
+                                       "• Suluhu na Hatua:\n" +
+                                       "1. Tatizo mara nyingi husababishwa na hitilafu ya faili za mfumo au hitilafu kwenye kitufe cha Power kilichokwama.\n" +
+                                       "2. Safisha kitufe cha Power au weka upya mfumo safi (Stock ROM) kwa kutumia SP FlashTool.",
+
+        "electronic_esp32_wifi_scanner": "RIPOTI YA KIELEKTRONIKI: KUTENGENEZA KICHUNGUZI CHA WI-FI KUPITIA ESP32\n\n" +
+                                       "• Matumizi:\n" +
+                                       "Kupima na kuonyesha mitandao yote ya Wi-Fi iliyoko karibu na eneo lako la kazi.\n\n" +
+                                       "• Suluhu na Hatua:\n" +
+                                       "1. Weka msimbo wa WiFiScan kwenye ESP32 kupitia Arduino IDE.\n" +
+                                       "2. Unganisha na skrini ndogo ya OLED kuona majina ya mitandao na nguvu zake (RSSI).",
+
+        "whatsapp_storage_cleanup": "RIPOTI YA KIELEKTRONIKI: KUSAFISHA KUMBUKUMBU ILIYOTUMIWA NA WHATSAPP\n\n" +
+                                    "• Tatizo:\n" +
+                                    "Simu kujaa kumbukumbu ghafla kutokana na video na picha za magroup ya WhatsApp.\n\n" +
+                                    "• Suluhu na Hatua:\n" +
+                                    "1. Nenda WhatsApp Settings > Storage and Data > Manage Storage.\n" +
+                                    "2. Futa mafaili makubwa yaliyotumwa mara kwa mara na zima chaguo la 'Auto-Download' ili kuzuia simu kupakua kila kitu kiotomatiki.",
+
+        "network_proxy_setup_pc": "RIPOTI YA KIELEKTRONIKI: KUWEKA PROXY KWENYE KOMPYUTA KWA AJILI YA USALAMA WA MTANDAO\n\n" +
+                                 "• Matumizi:\n" +
+                                 "Kupitisha mawasiliano ya mtandao kupitia seva maalum wakati wa kufanya kazi za kiufundi.\n\n" +
+                                 "• Suluhu na Hatua:\n" +
+                                 "1. Nenda Windows Settings > Network & Internet > Proxy.\n" +
+                                 "2. Weka anwani na bandari (Port) ya seva ya Proxy unayotaka kuitumia kwa ajili ya kulinda faragha yako.", 
+    
+          
+        "frp_vivo_mediatek": "RIPOTI YA KIELEKTRONIKI: KUVUNJA FRP KWA SIMU ZA VIVO (MTK CHIPSET)\n\n" +
+                           "• Tatizo:\n" +
+                           "Simu za Vivo zinazotumia MediaTek kushindwa kupitika kwenye ukurasa wa Google Account.\n\n" +
+                           "• Suluhu na Hatua:\n" +
+                           "1. Tumia zana za ufundi zenye uwezo wa kusoma BROM mode au Meta mode kupitia USB.\n" +
+                           "2. Chagua chaguo la 'Reset FRP' kwenye zana hiyo huku ukichomeka simu huku umeshikilia vifungo vya sauti.",
+
+        "network_unlock_samsung_usa": "RIPOTI YA KIELEKTRONIKI: KUFUNGUA MTANDAO WA SIMU ZA SAMSUNG KUTOKA USA (SPRINT/T-MOBILE)\n\n" +
+                                     "• Tatizo:\n" +
+                                     "Simu kusoma 'Invalid SIM' au kuzuia laini za ndani ya nchi.\n\n" +
+                                     "• Suluhu na Hatua:\n" +
+                                     "1. Tumia njia ya RMM/KNOX Bypass au kupitia huduma za seva za mtandaoni (Remote Server Unlock) kuandika cheti kipya cha mtandao.",
+
+        "whatsapp_media_not_downloading": "RIPOTI YA KIELEKTRONIKI: PICHA NA VIDEO ZA WHATSAPP KUKATAA KUSHUKA (MEDIA DOWNLOAD FAIL)\n\n" +
+                                        "• Tatizo:\n" +
+                                        "Kushindwa kupakua au kutuma picha na video kupitia WhatsApp.\n\n" +
+                                        "• Suluhu na Hatua:\n" +
+                                        "1. Angalia nafasi ya kuhifadhi kwenye simu (Storage Space); ikiwa imejaa, futa mafaili yasiyotakiwa.\n" +
+                                        "2. Angalia tarehe na saa ya simu; hakikisha iko sawa na ya mtandao (Automatic Date & Time).",
+
+        "pc_utility_ccleaner_fix": "RIPOTI YA KIELEKTRONIKI: KUSAFISHA KOMPYUTA ILIYOJAA MAFAILI YA Taka (TEMP FILES)\n\n" +
+                                 "• Tatizo:\n" +
+                                 "Kompyuta kuwa nzito sana wakati wa kufanya kazi za ufundi au kuandika namba za IMEI/Firmware.\n\n" +
+                                 "• Suluhu na Hatua:\n" +
+                                 "1. Tumia amri ya 'temp' na '%temp%' kupitia Run (Windows + R) na ufute mafaili yote ya ziada.\n" +
+                                 "2. Tumia chombo cha Disk Cleanup kilichomo ndani ya Windows kusafisha mfumo.",
+
+        "secret_codes_samsung_hardware": "RIPOTI YA KIELEKTRONIKI: MISIMBO YA KINA YA KUPIMA HARDWARE YA SAMSUNG\n\n" +
+                                         "• Matumizi:\n" +
+                                         "Kupima ubora wa spika, mtetemo (vibration), na kamera ya mbele/nyuma.\n\n" +
+                                         "• Suluhu na Hatua:\n" +
+                                         "1. Piga *#0283# kupima sauti ya simu (Audio Loopback Test).\n" +
+                                         "2. Piga *#0228# kuangalia hali halisi ya betri na ADC voltage yake.",
+
+        "hard_reset_infinix_smart": "RIPOTI YA KIELEKTRONIKI: KUFANYA HARD RESET KWA INFINIX SMART SERIES\n\n" +
+                                   "• Tatizo:\n" +
+                                   "Simu kukwama kwenye nenosiri au muundo (Pattern Lock).\n\n" +
+                                   "• Suluhu na Hatua:\n" +
+                                   "1. Zima simu kabisa, kisha bonyeza kitufe cha kushusha sauti (Volume Down) na Power.\n" +
+                                   "2. Mara nembo ya Infinix inapojitokeza, acha kitufe cha Power lakini endelea kushikilia Volume Down hadi uone picha ya roboti iliyolala na maandishi 'No Command', kisha bonyeza Power na Volume Up mara moja ili kuingia Recovery.",
+
+        "special_oppo_reid_dead": "RIPOTI YA KIELEKTRONIKI: KUTATUA SIMU ZA OPPO ZINAZOINGIA RECOVERY AUTOMATICALLY\n\n" +
+                                  "• Tatizo:\n" +
+                                  "Simu kuwaka moja kwa moja kwenye skrini ya lugha (Recovery Mode) kila inapowashwa.\n\n" +
+                                  "• Suluhu na Hatua:\n" +
+                                  "1. Tatizo hili mara nyingi husababishwa na kitufe cha kushusha au kuongeza sauti kilichokwama ndani (Volume Button stuck).\n" +
+                                  "2. Fanya usafi kwenye pini za vitufe vya sauti kwenye bodi au ubadilishe ribbon ya vitufe.",
+
+        "electronic_relay_nodemcu": "RIPOTI YA KIELEKTRONIKI: KUUNGANISHA NODEMCU ESP8266 NA SENSOR YA JOTO\n\n" +
+                                   "• Matumizi:\n" +
+                                   "Kusoma halijoto ya chumba cha seva au vifaa vya ufundi kupitia mtandao.\n\n" +
+                                   "• Suluhu na Hatua:\n" +
+                                   "1. Unganisha sensor ya DHT11 kwenye pini ya dijiti ya NodeMCU.\n" +
+                                   "2. Weka msimbo wa kusoma data na kuzituma kwenye dashibodi ya mtandaoni kupitia itifaki ya MQTT.",
+
+        "whatsapp_web_connection_fix": "RIPOTI YA KIELEKTRONIKI: KUTATUA WHATSAPP WEB KUKATAA KUUNGANISHA NA SIMU\n\n" +
+                                      "• Tatizo:\n" +
+                                      "Kompyuta kushindwa kusoma QR code au kuonyesha ujumbe wa 'Computer not connected'.\n\n" +
+                                      "• Suluhu na Hatua:\n" +
+                                      "1. Hakikisha simu ina intaneti iliyo thabiti na haiko kwenye Battery Saver kali inayozima mtandao wa usuli.\n" +
+                                      "2. Futa vifaa vyote vilivyounganishwa (Linked Devices) kwenye simu kisha uunganishe upya.",
+
+        "network_dns_cloudflare_setup": "RIPOTI YA KIELEKTRONIKI: KUWEKA DNS YA CLOUDFLARE ILI KUONGEZA KASI YA MTANDAO\n\n" +
+                                      "• Matumizi:\n" +
+                                      "Kuharakisha ufunguzi wa tovuti na huduma za mtandaoni kwenye PC au Simu.\n\n" +
+                                      "• Suluhu na Hatua:\n" +
+                                      "1. Nenda kwenye mipangilio ya mtandao wa Wi-Fi au Ethernet.\n" +
+                                      "2. Weka anwani za DNS za Cloudflare: Primary `1.1.1.1` na Secondary `1.0.0.1`.", 
+                                    
+        "whatsapp_ban_fix": "RIPOTI YA KIELEKTRONIKI: KUTATUA KUZUIWA KWA AKAUNTI YA WHATSAPP (ACCOUNT BAN)\n\n" +
+                            "• Tatizo:\n" +
+                            "Namba ya simu kuonyesha ujumbe wa 'This account is not allowed to use WhatsApp'.\n\n" +
+                            "• Suluhu na Hatua:\n" +
+                            "1. Wasiliana na msaada wa WhatsApp kupitia programu au barua pepe rasmi ukitumia lugha rasmi kueleza kuwa ulikuwa unatumia WhatsApp rasmi.\n" +
+                            "2. Sakinisha toleo rasmi la WhatsApp Messenger au WhatsApp Business kutoka Google Play Store badala ya matoleo yaliyorekebishwa (GBWhatsApp/FMWhatsApp) ambayo husababisha zuio hili.",
+
+        "whatsapp_message_pending": "RIPOTI YA KIELEKTRONIKI: UJUMBE WA WHATSAPP KUKWAMA KWENYE ALAMA YA SAA\n\n" +
+                                    "• Tatizo:\n" +
+                                    "Ujumbe hautumiki na unaonyesha alama ya saa badala ya tiki moja au mbili.\n\n" +
+                                    "• Suluhu na Hatua:\n" +
+                                    "1. Angalia muunganisho wa intaneti au futa kumbu kumbu za muda (App Cache) za WhatsApp kupitia Settings ya simu.\n" +
+                                    "2. Hakikisha huduma za usuli (Background Data) hazijazimwa kwa ajili ya WhatsApp.",
+
+        "frp_xiaomi_miui": "RIPOTI YA KIELEKTRONIKI: KUVUNJA FRP KWA SIMU ZA XIAOMI (MIUI)\n\n" +
+                           "• Tatizo:\n" +
+                           "Simu ya Xiaomi kukwama kwenye kitambulisho cha Mi Account au Google Account baada ya kufuta kila kitu.\n\n" +
+                           "• Suluhu na Hatua:\n" +
+                           "1. Tumia njia ya Wi-Fi network screen kuandika herufi za 'www.youtube.com', fungua kupitia kushiriki hadi kwenye kivinjari.\n" +
+                           "2. Tumia zana maalum za PC (kama UnlockTool au MRT) kuondoa FRP kupitia EDL Mode (Test Point) au Fastboot mode.",
+
+        "frp_huawei_emui": "RIPOTI YA KIELEKTRONIKI: KUVUNJA FRP KWA SIMU ZA HUAWEI (EMUI)\n\n" +
+                           "• Tatizo:\n" +
+                           "Simu za Huawei zinazotumia chip za Kirin kukwama kwenye Huawei ID.\n\n" +
+                           "• Suluhu na Hatua:\n" +
+                           "1. Tumia njia ya Safe Mode au kupitia huduma za 'TalkBack' kwenye matoleo ya zamani ya Android ya Huawei.\n" +
+                           "2. Tumia njia ya Test Point (kupunguza pini za bodi) kuunganisha na kompyuta kupitia USB COM 1.0 mode.",
+
+        "hard_reset_samsung_combination": "RIPOTI YA KIELEKTRONIKI: HARD RESET NA KUPITA PATTERN KWA SAMSUNG MPYA\n\n" +
+                                         "• Tatizo:\n" +
+                                         "Simu kugoma kuzima ili kufanya Hard Reset kawaida kwa sababu ya ulinzi wa nenosiri kwenye power menu.\n\n" +
+                                         "• Suluhu na Hatua:\n" +
+                                         "1. Chomeka kebo ya USB kwenye kompyuta, kisha bonyeza kwa pamoja kitufe cha kushusha sauti (Volume Down) na Power kwa sekunde 7 hadi izime.\n" +
+                                         "2. Mara tu inapozima, hamishia vidole haraka kwenye kitufe cha kuongeza sauti (Volume Up) na Power ili kuingia Recovery Mode.",
+
+        "secret_codes_xiaomi_oppo": "RIPOTI YA KIELEKTRONIKI: MISIMBO YA SIRI YA MAJARIBIO (SECRET CODES) KWA OPPO NA XIAOMI\n\n" +
+                                    "• Matumizi:\n" +
+                                    "Kupima vipengele vya simu (Engineer Mode / CIT).\n\n" +
+                                    "• Suluhu na Hatua:\n" +
+                                    "1. Kwa simu za Oppo/Realme piga: *#899# ili kufungua Engineer Mode ya kupima GPS, Bluetooth, na skrini.\n" +
+                                    "2. Kwa simu za Xiaomi piga: *#*#6484#*#* au *#*#64663#*#* kupima vipengele vyote vya ndani vya kifaa.",
+
+        "network_apn_settings": "RIPOTI YA KIELEKTRONIKI: KUREKEBISHA MIPANGILIO YA MTANDAO WA INTANETI (APN CONFIGURATION)\n\n" +
+                                "• Tatizo:\n" +
+                                "Simu inaonyesha mtandao wa simu lakini intaneti haifanyi kazi (Hakuna alama ya 4G/LTE).\n\n" +
+                                "• Suluhu na Hatua:\n" +
+                                "1. Nenda Settings > Network & Internet > Mobile Network > Access Point Names (APN).\n" +
+                                "2. Weka jina rasmi na mtandao wa mtoa huduma wako wa simu (mfano: Vodacom, Airtel, au Orange) kisha uhifadhi na uwashe simu upya.",
+
+        "pc_utility_rufus_bootable": "RIPOTI YA KIELEKTRONIKI: KUTUMIA RUFUS KUTENGENEZA BOOTABLE USB YA WINDOWS\n\n" +
+                                    "• Matumizi:\n" +
+                                    "Kuweka mfumo mpya wa kompyuta kupitia Flash Disk.\n\n" +
+                                    "• Suluhu na Hatua:\n" +
+                                    "1. Weka Flash Disk yenye ukubwa wa angalau 8GB.\n" +
+                                    "2. Fungua programu ya Rufus, chagua faili la ISO la Windows, chagua 'GPT' kwa kompyuta za kisasa za UEFI, kisha bonyeza 'Start'.",
+
+        "smart_home_relay_control": "RIPOTI YA KIELEKTRONIKI: UDHIBITI WA VIFAA VYA KIELEKTRONIKI KUPITIA RELAY NA ESP8266\n\n" +
+                                    "• Matumizi:\n" +
+                                    "Kuwasha na kuzima taa au vifaa vya nyumbani kupitia mtandao wa Wi-Fi.\n\n" +
+                                    "• Suluhu na Hatua:\n" +
+                                    "1. Unganisha moduli ya Relay kwenye pini za pato za ESP8266 au NodeMCU.\n" +
+                                    "2. Tumia msimbo wa Arduino IDE kuunganisha kifaa na seva ya ndani au Blynk platform kwa ajili ya udhibiti wa mbali.",
+
+        "special_tecno_camon_dead_fix": "RIPOTI YA KIELEKTRONIKI: KUTATUA TECNO CAMON AU SPARK INAYOZIMA BAADA YA NEMBO\n\n" +
+                                       "• Tatizo:\n" +
+                                       "Simu kuwaka hadi kwenye nembo ya Tecno kisha kujizima yenyewe au kurudi kwenyerecovery.\n\n" +
+                                       "• Suluhu na Hatua:\n" +
+                                       "1. Tatizo mara nyingi husababishwa na faili za mfumo zilizoharibika au betri dhaifu inayoshuka voltage ghafla.\n" +
+                                       "2. Pima betri kwa multimeter; ikiwa iko chini ya 3.7V, iwashe kwa chaja ya nje (battery booster) kisha uweke firmware safi kupitia FlashTool."
+                 };
+
+     function sendUserQuery() {
+    const input = document.getElementById("userInputQuery");
+    const query = input.value.toLowerCase().trim();
+    const history = document.getElementById("chatHistory");
+
+    if (query === "") return;
+
+    // 1. Weka swali la mtumiaji kwenye skrini
+    history.innerHTML += `
+        <div class="flex items-start justify-end space-x-4">
+            <div class="bg-cyan-900/50 p-3 rounded-2xl rounded-tr-none text-xs text-white max-w-[80%]">${input.value}</div>
+        </div>`;
+
+    let responseText = "Samahani, sikupata taarifa kamili inayohusiana na neno hilo kwenye hifadhidata ya Byao Elite. Jaribu kutumia neno lingine muhimu.";
+    
+    // 2. LOGIC MPYA: Kutafuta neno popote (Kwenye Kichwa au Ndani ya Maelezo)
+    // Tunasawazisha maneno yaliyoandikwa ili yatafutwe hata kama yametenganishwa
+    const searchWords = query.split(" ").filter(word => word.length > 1); // Ondoa herufi fupi zisizo na maana
+
+    let bestMatchScore = 0;
+
+    for (let key in masterDatabase) {
+        let value = masterDatabase[key].toLowerCase();
+        let lowerKey = key.toLowerCase();
+        let score = 0;
+
+        // Angalia kama neno kuu lipo kwenye Kichwa (Key) au ndani ya Maelezo (Value)
+        searchWords.forEach(word => {
+            if (lowerKey.includes(word)) {
+                score += 3; // Pa uzito mkubwa kama neno lipo kwenye kichwa
+            }
+            if (value.includes(word)) {
+                score += 1; // Ongeza alama kama neno lipo ndani ya maelezo ya moduli hiyo
+            }
+        });
+
+        // Chagua ile yenye alama za juu zaidi
+        if (score > bestMatchScore) {
+            bestMatchScore = score;
+            responseText = masterDatabase[key];
+        }
+    }
+
+    input.value = ""; // Safisha kibao cha kuandikia
+
+    // 3. Tengeneza muundo wa jibu la AI likiwa tupu kwanza kwa ajili ya Streaming
+    const aiResponseId = "ai-resp-" + Date.now();
+    history.innerHTML += `
+        <div class="flex items-start space-x-4">
+            <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-cyan-400 font-bold text-xs shrink-0">AI</div>
+            <div id="${aiResponseId}" class="bg-panelCharcoal border border-slate-800/90 p-5 rounded-2xl rounded-tl-none text-xs text-slate-300 shadow-xl max-w-[88%] leading-relaxed"></div>
+        </div>`;
+
+    // 4. Mchakato wa kutiririsha maandishi (Typing Effect)
+    const targetElement = document.getElementById(aiResponseId);
+    let charIndex = 0;
+
+    function typeWriter() {
+        if (charIndex < responseText.length) {
+            targetElement.innerHTML += responseText.charAt(charIndex);
+            charIndex++;
+            setTimeout(typeWriter, 15);
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        }
+    }
+
+    typeWriter();
+}
+
+</script>
+
+</body>
+</html>
+

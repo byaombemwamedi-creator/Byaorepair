@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="sw" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fundi Pro - Ecosystem</title>
+    <!-- Tailwind CSS, Lucide Icons, QR Code & PeerJS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    
+    <!-- Supabase JS Client CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        .page { display: none; }
+        .page-active { display: block; }
+        #toast { transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out; }
+    </style>
+</head>
+
+<body class="bg-slate-900 text-slate-100 font-sans pb-24 min-h-screen">
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-slate-800 border border-blue-500/50 text-slate-100 px-4 py-2 rounded-xl shadow-xl flex items-center gap-2 opacity-0 pointer-events-none -translate-y-5">
+        <span id="toast-icon">💡</span>
+        <span id="toast-message" class="text-xs font-semibold">Message</span>
+    </div>
+
+    <!-- Offline Indicator Status Bar -->
+    <div id="offline-bar" class="hidden bg-amber-600 text-slate-950 text-[11px] font-bold py-1 px-4 text-center sticky top-0 z-50 flex items-center justify-between">
+        <span>⚠️ Hupo Mtandaoni (Offline Mode Active) - Data zinahifadhiwa kwenye Simu</span>
+        <span id="sync-status" class="bg-slate-900 text-amber-400 px-2 py-0.5 rounded text-[10px]">Pending Sync</span>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-slate-800 border-b border-slate-700 p-4 sticky top-0 z-40 flex justify-between items-center shadow-lg">
+        <div class="flex items-center gap-2">
+            <span class="text-2xl">🔧</span>
+            <div>
+                <h1 class="font-bold text-lg text-blue-400 leading-none">Fundi Pro</h1>
+                <span class="text-[10px] text-slate-400">Workspace & Ecosystem</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="bg-yellow-500/20 text-yellow-400 border border-yellow-500/40 text-[10px] font-bold px-2 py-0.5 rounded-full">MASTER PRO</span>
+            <button onclick="checkNewNotifications()" class="bg-slate-700 p-2 rounded-full text-xs">🔔</button>
+        </div>
+    </header>
+
+    <!-- Call Overlay Window -->
+    <div id="call-screen" class="hidden fixed inset-0 bg-slate-950/95 z-50 flex flex-col justify-between p-4">
+        <div class="text-center pt-6">
+            <h3 id="call-status" class="text-lg font-bold text-blue-400 animate-pulse">Inapiga Simu...</h3>
+            <p id="remote-peer-id" class="text-xs text-slate-400">Nambari ya Mwasiliani</p>
+        </div>
+
+        <div class="relative w-full max-w-md mx-auto aspect-video bg-slate-900 rounded-2xl overflow-hidden border border-slate-800">
+            <video id="remote-video" autoplay playsinline class="w-full h-full object-cover"></video>
+            <video id="local-video" autoplay playsinline muted class="absolute bottom-2 right-2 w-28 h-20 bg-slate-800 rounded-lg border border-slate-700 object-cover"></video>
+        </div>
+
+        <div class="flex justify-center gap-6 pb-8">
+            <button onclick="toggleAudio()" id="btn-mute" class="p-4 bg-slate-800 rounded-full border border-slate-700 text-xl">🎙️</button>
+            <button onclick="endCall()" class="p-4 bg-red-600 hover:bg-red-700 rounded-full text-xl shadow-lg shadow-red-900/50">📞</button>
+            <button onclick="toggleVideo()" id="btn-camera" class="p-4 bg-slate-800 rounded-full border border-slate-700 text-xl">📹</button>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="p-4 max-w-md mx-auto">
+
+        <!-- ================= 1. HOME ================= -->
+        <section id="page-home" class="page page-active space-y-4">
+            
+            <!-- Kadi 1: Supabase Cloud Banner Ad 1 (Live kutoka Supabase global_ads) -->
+            <div class="bg-gradient-to-r from-amber-600/20 to-yellow-600/20 border border-amber-500/40 p-3 rounded-xl flex items-center justify-between">
+                <div>
+                    <span class="text-[9px] bg-amber-500 text-slate-950 font-bold px-1.5 py-0.5 rounded">SUPABASE CLOUD AD</span>
+                    <p id="home-ad-title" class="text-xs font-bold text-amber-300 mt-1">Inapakia tangazo...</p>
+                    <p id="home-ad-desc" class="text-[10px] text-slate-300">Tafadhali subiri data za Supabase...</p>
+                </div>
+                <button onclick="openDynamicAdLink()" class="bg-amber-500 text-slate-950 text-[10px] font-bold px-2 py-1 rounded-lg">Angalia</button>
+            </div>
+
+            <!-- Kadi 2: Assistant Fundi AI / Tool -->
+            <div class="bg-gradient-to-r from-teal-900/60 to-emerald-900/60 border border-emerald-500/50 p-4 rounded-2xl shadow-lg space-y-2">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl">🤖</span>
+                        <h3 class="font-bold text-sm text-emerald-300">Assistant wa Kiufundi</h3>
+                    </div>
+                    <span class="bg-emerald-500/20 text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-400/30">MSAADA WA HARAKA</span>
+                </div>
+                <p class="text-xs text-slate-200 font-medium">
+                    Unakumbana na changamoto au tatizo gumu la kiufundi? Tumia zana ya Assistant kukusaidia kutatua masuala mbalimbali kwa urahisi.
+                </p>
+                <div class="pt-1">
+                    <a href="assistant.html" class="block w-full text-center bg-emerald-600 hover:bg-emerald-500 text-white text-xs py-2 rounded-xl font-bold shadow-md transition">
+                        🛠️ Fungua Assistant Sasa
+                    </a>
+                </div>
+            </div>
+
+            <!-- Kadi 3: AI Voice to Text Report Generator (Inatunza Supabase) -->
+            <div class="bg-gradient-to-r from-purple-900/60 to-indigo-900/60 border border-purple-500/50 p-4 rounded-2xl shadow-lg space-y-3">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl">🎙️</span>
+                        <h3 class="font-bold text-sm text-purple-300">AI Voice Technical Report</h3>
+                    </div>
+                    <span class="bg-purple-500/20 text-purple-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-purple-400/30">MIKONO MICHAFU MODE</span>
+                </div>
+                <p class="text-[11px] text-slate-300">
+                    Bonyaza kitufe kuongea ripoti ya kazi bila kugusa kioo sana.
+                </p>
+                <div class="space-y-2">
+                    <button id="btn-voice-rec" onclick="toggleVoiceReport()" class="w-full bg-purple-600 hover:bg-purple-500 text-white text-xs py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 transition shadow-md">
+                        <span id="voice-icon">🎙️</span>
+                        <span id="voice-text">Anza Kurekod Ripoti kwa Sauti</span>
+                    </button>
+                    <textarea id="ai-voice-output" placeholder="Ripoti itakayorekodiwa kwa sauti itaonekana hapa..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs h-20 resize-none text-purple-200 focus:outline-none"></textarea>
+                    <button onclick="saveVoiceReportToSupabase()" class="w-full bg-slate-700 hover:bg-slate-600 text-xs py-1.5 rounded-lg font-semibold border border-slate-600">Hifadhi Ripoti kwenye Supabase</button>
+                </div>
+            </div>
+
+            <!-- Kadi 4: QR Code Scanning & History -->
+            <div class="bg-slate-800 border border-slate-700 p-4 rounded-2xl space-y-3">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl">📱</span>
+                        <h3 class="font-bold text-sm text-blue-400">QR Code Equipment History</h3>
+                    </div>
+                    <span class="text-[10px] bg-blue-900/60 text-blue-300 px-2 py-0.5 rounded border border-blue-500/30">UAMINIFU</span>
+                </div>
+                <p class="text-[11px] text-slate-400">Bandika QR kwenye kifaa cha mteja ili kuona historia ya ukarabati.</p>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="openQRModal('scan')" class="bg-blue-600 hover:bg-blue-500 text-xs py-2 rounded-xl font-bold flex items-center justify-center gap-1">
+                        <span>🔍</span>
+                        <span>Scan QR Kifaa</span>
+                    </button>
+                    <button onclick="openQRModal('generate')" class="bg-slate-700 hover:bg-slate-600 border border-slate-600 text-xs py-2 rounded-xl font-bold flex items-center justify-center gap-1">
+                        <span>➕</span>
+                        <span>Tengeneza QR</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Kadi 5: Geolocation Radar (Radius 5km Jobs - Live Supabase Jobs) -->
+            <div class="bg-slate-800 border border-slate-700 p-4 rounded-2xl space-y-3">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl">📍</span>
+                        <h3 class="font-bold text-sm text-emerald-400">Proximity Radar (Radius 5km)</h3>
+                    </div>
+                    <button onclick="loadProximityJobs()" class="text-[10px] bg-emerald-900/60 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/30 font-bold">RELOAD</button>
+                </div>
+                <p class="text-[11px] text-slate-400">Kazi za dharura za wateja waliopo karibu na eneo lako:</p>
+                <div id="radar-jobs-list" class="space-y-2">
+                    <div class="bg-slate-900 border border-slate-700 p-2.5 rounded-xl text-xs text-center text-slate-400">
+                        Inapakia kazi za karibu kutoka Supabase...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kadi 6: Fundi Learning Academy Preview -->
+            <div class="bg-gradient-to-r from-cyan-900/50 to-blue-900/50 border border-cyan-500/40 p-4 rounded-2xl space-y-3">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl">🎓</span>
+                        <h3 class="font-bold text-sm text-cyan-300">Fundi Learning Academy</h3>
+                    </div>
+                    <span class="bg-cyan-500/20 text-cyan-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-cyan-400/30">TUTORIALS</span>
+                </div>
+                <p class="text-[11px] text-slate-300">Jifunze teknolojia mpya kupitia video za dakika 1-3 kila siku.</p>
+                <button onclick="openAcademyModal()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white text-xs py-2 rounded-xl font-bold shadow-md">
+                    📺 Fungua Kozi na Video fupi
+                </button>
+            </div>
+
+            <!-- Kadi 7: Kadi ya Kurudi Chumba Namba Moja -->
+            <div class="bg-gradient-to-r from-blue-900/60 to-indigo-900/60 border border-blue-500/50 p-4 rounded-2xl shadow-lg space-y-2">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl">🚪</span>
+                        <h3 class="font-bold text-sm text-blue-300">Rudi Kwenye Kazi</h3>
+                    </div>
+                    <span class="bg-blue-500/20 text-blue-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-blue-400/30">CHUMBA NO. 1</span>
+                </div>
+                <p class="text-xs text-slate-200 font-medium">
+                    Fundi, tafadhali rudi kwenye <span class="text-yellow-400 font-bold">fundi.html</span> kuendelea na kazi iliyobaki.
+                </p>
+                <div class="pt-1 flex gap-2">
+                    <button onclick="confirmReturnToRoomOne()" class="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs py-2 rounded-xl font-bold shadow-md">
+                        👍 Niko Njiani / Nitarejea Sasa
+                    </button>
+                </div>
+            </div>
+
+            <!-- Kadi 8: SOS Emergency Button -->
+            <button onclick="openSOSModal()" class="w-full bg-gradient-to-r from-red-600 to-red-800 text-white p-4 rounded-2xl font-bold shadow-lg shadow-red-900/40 flex items-center justify-between border border-red-500/30">
+                <div class="flex items-center gap-3">
+                    <span class="text-2xl animate-bounce">🚨</span>
+                    <div class="text-left">
+                        <p class="text-base font-extrabold leading-tight">SOS - Okoa Kazi</p>
+                        <p class="text-[11px] opacity-80">Omba fundi aliye karibu akusaidie</p>
+                    </div>
+                </div>
+                <span class="bg-white/20 px-3 py-1 rounded-lg text-xs">Omba Msaada</span>
+            </button>
+
+            <!-- Kadi 9: Status & Points Reminder -->
+            <div class="bg-slate-800/80 border border-slate-700 p-4 rounded-xl space-y-2">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-semibold text-blue-400">💡 Mfumo wa Pointi za Wateja</span>
+                    <span class="text-[10px] bg-blue-900/60 text-blue-300 px-2 py-0.5 rounded">Elimu</span>
+                </div>
+                <p class="text-xs text-slate-300 leading-relaxed">
+                    Wateja wako wanapata pointi wanapotoa mrejesho au kutumia huduma. Eleza mteja pointi hizi zinampa punguzo la gharama ili kuongeza uaminifu!
+                </p>
+            </div>
+
+            <!-- Kadi 10: Zana za Kazi -->
+            <div class="space-y-3">
+                <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider">Zana za Kazi</h2>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-slate-800 border border-slate-700 p-3.5 rounded-xl space-y-2">
+                        <span class="text-xl">📄</span>
+                        <h3 class="font-bold text-sm">Ankara (Invoice)</h3>
+                        <p class="text-[11px] text-slate-400">Tengeneza risiti na ankara ya huduma.</p>
+                        <button onclick="openInvoiceModal()" class="w-full bg-blue-600 text-xs py-1.5 rounded-lg font-semibold hover:bg-blue-500">Tengeneza</button>
+                    </div>
+                    <div class="bg-slate-800 border border-slate-700 p-3.5 rounded-xl space-y-2">
+                        <span class="text-xl">🛒</span>
+                        <h3 class="font-bold text-sm">Soko la Vipuri</h3>
+                        <p class="text-[11px] text-slate-400">Uza au nunua vifaa na spare parts.</p>
+                        <button onclick="showPage('feed')" class="w-full bg-slate-700 text-xs py-1.5 rounded-lg font-semibold border border-slate-600">Tazama Soko</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 2. CHAT & IN-APP PHONE CALLS ================= -->
+        <section id="page-chat" class="page space-y-4">
+            
+            <!-- Supabase Cloud Banner Ad 2 -->
+            <div class="bg-gradient-to-r from-blue-600/20 to-indigo-600/20 border border-blue-500/40 p-3 rounded-xl flex items-center justify-between">
+                <div>
+                    <span class="text-[9px] bg-blue-500 text-white font-bold px-1.5 py-0.5 rounded">SUPABASE CLOUD AD</span>
+                    <p class="text-xs font-bold text-blue-300 mt-1">Kozi za Umeme na Electronics</p>
+                    <p class="text-[10px] text-slate-300">Jiunge sasa Upate Cheti cha Kimataifa</p>
+                </div>
+                <button onclick="showToast('Inafungua kozi kutoka Supabase...', '📚')" class="bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded-lg">Jiunge</button>
+            </div>
+
+            <!-- Fast Chat Users / Supabase Technicians List -->
+            <div class="space-y-3 pt-2">
+                <p class="text-xs font-bold text-slate-400 uppercase">Wasiliana na Mafundi waliosajiliwa</p>
+                
+                <div id="wasiliano-mafundi-container" class="space-y-2">
+                    <div class="bg-slate-800 border border-slate-700 p-3 rounded-xl text-center text-xs text-slate-400">
+                        Inapakia orodha ya mafundi kutoka Supabase...
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 3. SOCIAL FEED ================= -->
+        <section id="page-feed" class="page space-y-4">
+            <!-- Supabase Cloud Banner Ad 3 -->
+            <div class="bg-gradient-to-r from-emerald-600/20 to-teal-600/20 border border-emerald-500/40 p-3 rounded-xl flex items-center justify-between">
+                <div>
+                    <span class="text-[9px] bg-emerald-500 text-slate-950 font-bold px-1.5 py-0.5 rounded">SUPABASE CLOUD AD</span>
+                    <p class="text-xs font-bold text-emerald-300 mt-1">Soko la Speares Mpya</p>
+                    <p class="text-[10px] text-slate-300">Nunua Transistors na ICs Halisi Hapa</p>
+                </div>
+                <button onclick="showToast('Aagiza spare kutoka Supabase...', '🛒')" class="bg-emerald-600 text-white text-[10px] font-bold px-2 py-1 rounded-lg">Soko</button>
+            </div>
+
+            <h2 class="text-lg font-bold text-blue-400">Fundi Social Wall</h2>
+
+            <!-- Post Creation Box -->
+            <div class="bg-slate-800 border border-slate-700 rounded-xl p-3.5 space-y-3">
+                <p class="text-xs font-bold text-slate-300">Tengeneza Post Mpya:</p>
+                <textarea id="post-text" placeholder="Andika Maelezo ya kazi au swali lako..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-xs focus:outline-none focus:border-blue-500 h-20 resize-none"></textarea>
+                
+                <div id="file-preview" class="hidden text-xs text-blue-400 bg-slate-900/60 p-2 rounded-lg border border-slate-700"></div>
+
+                <div class="flex justify-between items-center pt-1">
+                    <button onclick="document.getElementById('post-input').click()" class="bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1">
+                        <span>📷</span>
+                        <span>Weka Picha/Video</span>
+                    </button>
+                    <input type="file" id="post-input" class="hidden" accept="image/*,video/*" onchange="previewSelectedFile(event)">
+
+                    <button onclick="submitPost()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-md shadow-blue-900/30 flex items-center gap-1">
+                        <span>🚀</span>
+                        <span>Sukuma Post</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dynamic Post Feed Container -->
+            <div id="posts-container" class="space-y-4">
+                <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 bg-emerald-600 rounded-full flex items-center justify-center font-bold text-xs">A</div>
+                        <div>
+                            <p class="font-bold text-xs">Fundi Alex</p>
+                            <p class="text-[10px] text-slate-400">Meneja wa Umeme • Dakika 20 zilizopita</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-300">Leo nimefanikiwa kurekebisha Inverter Subwoofer iliyokuwa na short circuit kwenye Power Supply Section.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 4. MICHEZO 100 ================= -->
+        <section id="page-games" class="page space-y-4">
+            <!-- Supabase Cloud Banner Ad 4 -->
+            <div class="bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-500/40 p-3 rounded-xl flex items-center justify-between">
+                <div>
+                    <span class="text-[9px] bg-purple-500 text-white font-bold px-1.5 py-0.5 rounded">SUPABASE CLOUD AD</span>
+                    <p class="text-xs font-bold text-purple-300 mt-1">Pata Points Shinda Zawadi</p>
+                    <p class="text-[10px] text-slate-300">Cheza michezo uongeze uwezo wa Kiufundi</p>
+                </div>
+                <button onclick="showToast('Zawadi za Supabase zimepakiwa', '🎮')" class="bg-purple-600 text-white text-[10px] font-bold px-2 py-1 rounded-lg">Zawadi</button>
+            </div>
+
+            <div class="flex justify-between items-center">
+                <h2 class="text-lg font-bold text-blue-400">Michezo 100 ya Ujuzi wa Kiufundi</h2>
+                <span class="text-[10px] bg-blue-900/60 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded-full font-bold">100 GAMES</span>
+            </div>
+
+            <!-- Game Display Screen -->
+            <div id="game-window" class="bg-slate-800 border border-slate-700 p-4 rounded-xl min-h-[220px] flex flex-col justify-center items-center text-center space-y-3 sticky top-20 z-30 shadow-2xl">
+                <p class="text-xs text-slate-400">Chagua mchezo wowote kati ya 100 hapa chini ili kuanza kucheza.</p>
+            </div>
+
+            <!-- List of 100 Interactive Games Container -->
+            <div id="games-list-container" class="space-y-2 max-h-[450px] overflow-y-auto pr-1">
+                <!-- Javascript Inajaza Michezo 100 Hapa -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODALS -->
+
+    <!-- Modal 1: QR Code Equipment History Modal -->
+    <div id="modal-qr" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-slate-700 w-full max-w-md rounded-2xl p-5 space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+                <h3 id="qr-modal-title" class="font-bold text-blue-400 text-sm">QR Code System</h3>
+                <button onclick="closeQRModal()" class="text-slate-400 text-sm font-bold">✕</button>
+            </div>
+            
+            <!-- Scan QR View -->
+            <div id="qr-scan-view" class="space-y-3 hidden">
+                <div id="reader" class="w-full bg-slate-900 rounded-xl overflow-hidden border border-slate-700"></div>
+                <div id="qr-scan-result" class="bg-slate-900 p-3 rounded-xl border border-slate-700 text-xs hidden space-y-1">
+                    <p class="font-bold text-emerald-400">Historia ya Kifaa Ilipatikana:</p>
+                    <p id="qr-history-text" class="text-slate-300"></p>
+                </div>
+            </div>
+
+            <!-- Generate QR View -->
+            <div id="qr-gen-view" class="space-y-3 hidden">
+                <input id="qr-device-name" type="text" placeholder="Jina la Kifaa (Mfano: Friji LG Inverter)" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs">
+                <input id="qr-repair-details" type="text" placeholder="Ukarabati Uliofanyika (Mfano: Changed Compressor)" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs">
+                <button onclick="generateEquipmentQR()" class="w-full bg-blue-600 text-xs py-2 rounded-lg font-bold">Tengeneza QR Code</button>
+                
+                <div class="flex justify-center pt-2">
+                    <div id="qrcode-display" class="bg-white p-3 rounded-xl"></div>
+                </div>
+            </div>
+
+            <button onclick="closeQRModal()" class="w-full bg-slate-700 text-xs py-2 rounded-xl font-bold">Funga</button>
+        </div>
+    </div>
+
+    <!-- Modal 2: Fundi Academy Modal -->
+    <div id="modal-academy" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-slate-700 w-full max-w-md rounded-2xl p-5 space-y-4 max-h-[85vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+                <h3 class="font-bold text-cyan-400 text-sm">🎓 Fundi Learning Academy</h3>
+                <button onclick="closeAcademyModal()" class="text-slate-400 text-sm font-bold">✕</button>
+            </div>
+            <div class="space-y-3">
+                <div class="bg-slate-900 p-3 rounded-xl border border-slate-700 space-y-2">
+                    <span class="text-[10px] bg-cyan-900/80 text-cyan-300 px-2 py-0.5 rounded font-bold">DAKIKA 2 VIDEO</span>
+                    <p class="text-xs font-bold text-slate-200">1. Jinsi ya Kufunga Inverter AC ya Kisasa</p>
+                    <div class="aspect-video bg-slate-800 rounded-lg flex items-center justify-center border border-slate-700 text-slate-500 text-xs">
+                        ▶️ Video Player Tutorial
+                    </div>
+                </div>
+                <div class="bg-slate-900 p-3 rounded-xl border border-slate-700 space-y-2">
+                    <span class="text-[10px] bg-cyan-900/80 text-cyan-300 px-2 py-0.5 rounded font-bold">DAKIKA 3 VIDEO</span>
+                    <p class="text-xs font-bold text-slate-200">2. Kubaini Tatizo la Board ya Inverter Subwoofer</p>
+                    <div class="aspect-video bg-slate-800 rounded-lg flex items-center justify-center border border-slate-700 text-slate-500 text-xs">
+                        ▶️ Video Player Tutorial
+                    </div>
+                </div>
+            </div>
+            <button onclick="closeAcademyModal()" class="w-full bg-slate-700 text-xs py-2 rounded-xl font-bold">Funga Academy</button>
+        </div>
+    </div>
+
+    <!-- Modal Ya Invoice -->
+    <div id="modal-invoice" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-slate-700 w-full max-w-md rounded-2xl p-5 space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+                <h3 class="font-bold text-blue-400 text-sm">Tengeneza Invoice / Risiti</h3>
+                <button onclick="closeInvoiceModal()" class="text-slate-400 text-sm font-bold">✕</button>
+            </div>
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block text-slate-400 mb-1">Jina la Mteja</label>
+                    <input id="inv-client" type="text" placeholder="Mfano: John Doe" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1">Maelezo ya Huduma</label>
+                    <input id="inv-service" type="text" placeholder="Mfano: Kurekeibisha Subwoofer" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1">Gharama (TSH / USD)</label>
+                    <input id="inv-amount" type="number" placeholder="50000" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 focus:outline-none focus:border-blue-500">
+                </div>
+            </div>
+            <div class="flex gap-2 pt-2">
+                <button onclick="generateInvoice()" class="flex-1 bg-blue-600 hover:bg-blue-500 text-xs py-2 rounded-lg font-bold">Onyesha Invoice</button>
+                <button onclick="closeInvoiceModal()" class="bg-slate-700 hover:bg-slate-600 text-xs px-4 py-2 rounded-lg">Ghairi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Ya SOS Emergency -->
+    <div id="modal-sos" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-red-500/40 w-full max-w-md rounded-2xl p-5 space-y-4 text-center">
+            <span class="text-4xl animate-bounce inline-block">🚨</span>
+            <h3 class="font-bold text-red-400 text-base">Mfumo wa SOS Umeamilishwa</h3>
+            <p class="text-xs text-slate-300">Tunasoma eneo lako na kutuma ombi kwa mafundi 3 walio karibu nawe...</p>
+            <div class="bg-slate-900 p-3 rounded-xl border border-slate-700 text-left space-y-2 text-xs">
+                <p class="text-slate-400 font-bold">Mafundi waliopatikana karibu:</p>
+                <p class="text-emerald-400 font-semibold">✓ Fundi Kassim (Mita 400)</p>
+                <p class="text-emerald-400 font-semibold">✓ Fundi Baraka (Mita 850)</p>
+            </div>
+            <button onclick="closeSOSModal()" class="w-full bg-red-600 hover:bg-red-500 text-xs py-2.5 rounded-xl font-bold">Funga & Tuma Arifa</button>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="fixed bottom-0 w-full bg-slate-800 border-t border-slate-700 flex justify-around py-3 px-2 z-40">
+        <button onclick="showPage('home')" id="nav-home" class="flex flex-col items-center text-blue-400">
+            <span class="text-lg">🏠</span>
+            <span class="text-[10px] font-bold">Home</span>
+        </button>
+        <button onclick="showPage('chat')" id="nav-chat" class="flex flex-col items-center text-slate-400">
+            <span class="text-lg">💬</span>
+            <span class="text-[10px] font-bold">Chat</span>
+        </button>
+        <button onclick="showPage('feed')" id="nav-feed" class="flex flex-col items-center text-slate-400">
+            <span class="text-lg">📸</span>
+            <span class="text-[10px] font-bold">Feed</span>
+        </button>
+        <button onclick="showPage('games')" id="nav-games" class="flex flex-col items-center text-slate-400">
+            <span class="text-lg">🎮</span>
+            <span class="text-[10px] font-bold">Michezo</span>
+        </button>
+    </nav>
+
+    <!-- JavaScript Execution Logic -->
+    <script>
+        // ==========================================
+        // 1. GLOBAL VARIABLES & STATE MANAGEMENT
+        // ==========================================
+        let peer = null;
+        let myPhoneNum = '';
+        let currentCall = null;
+        let localStream = null;
+        let selectedFile = null;
+        let isRecordingVoice = false;
+        let recognition = null;
+        let html5QrcodeScanner = null;
+
+        // ==========================================
+        // 2. SPEECH RECOGNITION ENGINE (AI VOICE TO TEXT)
+        // ==========================================
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'sw-TZ';
+
+            recognition.onresult = (event) => {
+                let transcript = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    transcript += event.results[i][0].transcript;
+                }
+                document.getElementById('ai-voice-output').value = transcript;
+            };
+
+            recognition.onerror = () => {
+                isRecordingVoice = false;
+                updateVoiceBtnUI();
+            };
+        }
+
+        function toggleVoiceReport() {
+            if (!recognition) {
+                showToast("Kivinjari hiki hakitawanyi Sauti kwa Maandishi direct", "⚠️");
+                return;
+            }
+            if (!isRecordingVoice) {
+                recognition.start();
+                isRecordingVoice = true;
+                showToast("Anza kuongea ripoti yako sasa...", "🎙️");
+            } else {
+                recognition.stop();
+                isRecordingVoice = false;
+                showToast("Usajili wa sauti umesimama!", "⏹️");
+            }
+            updateVoiceBtnUI();
+        }
+
+        function updateVoiceBtnUI() {
+            const btnText = document.getElementById('voice-text');
+            const btnIcon = document.getElementById('voice-icon');
+            if (isRecordingVoice) {
+                btnText.innerText = "Inarekodi... Bofya Kusimamisha";
+                btnIcon.innerText = "🔴";
+            } else {
+                btnText.innerText = "Anza Kurekod Ripoti kwa Sauti";
+                btnIcon.innerText = "🎙️";
+            }
+        }
+
+        async function saveVoiceReportToSupabase() {
+            const txt = document.getElementById('ai-voice-output').value;
+            if (!txt) {
+                showToast("Hakuna ripoti ya kuhifadhi!", "⚠️");
+                return;
+            }
+            
+            try {
+                const { data: { user } } = await supabaseClient.auth.getUser();
+                const userId = user ? user.id : null;
+
+                const { error } = await supabaseClient
+                    .from('technical_reports')
+                    .insert([{ 
+                        report_text: txt, 
+                        user_id: userId, 
+                        created_at: new Date().toISOString() 
+                    }]);
+
+                if (error) throw error;
+                showToast("Ripoti ya sauti imehifadhiwa Supabase kikamilifu!", "💾");
+            } catch (err) {
+                console.error(err);
+                saveOfflineData('technical_reports', { text: txt, date: new Date().toLocaleString() });
+                showToast("Imesititizwa Offline Storage (Supabase connection pending)", "⚠️");
+            }
+            document.getElementById('ai-voice-output').value = '';
+        }
+
+        // ==========================================
+        // 3. OFFLINE SYNC ENGINE
+        // ==========================================
+        function updateOnlineStatus() {
+            const bar = document.getElementById('offline-bar');
+            if (navigator.onLine) {
+                bar.classList.add('hidden');
+                syncOfflineData();
+            } else {
+                bar.classList.remove('hidden');
+            }
+        }
+
+        function saveOfflineData(key, data) {
+            let existing = JSON.parse(localStorage.getItem(key) || '[]');
+            existing.push(data);
+            localStorage.setItem(key, JSON.stringify(existing));
+        }
+
+        async function syncOfflineData() {
+            const reports = localStorage.getItem('technical_reports');
+            if (reports) {
+                showToast("Inasawazisha (Syncing) Data za offline kwenye Supabase...", "🔄");
+                try {
+                    const parsed = JSON.parse(reports);
+                    for(let rep of parsed) {
+                        await supabaseClient.from('technical_reports').insert([{ report_text: rep.text, created_at: rep.date }]);
+                    }
+                    localStorage.removeItem('technical_reports');
+                    showToast("Data zote zimesync successfully kwenye Supabase!", "✅");
+                } catch(e) {
+                    console.error("Sync error:", e);
+                }
+            }
+        }
+
+        // ==========================================
+        // 4. QR CODE & RADAR ENGINE
+        // ==========================================
+        function openQRModal(type) {
+            document.getElementById('modal-qr').classList.remove('hidden');
+            if (type === 'scan') {
+                document.getElementById('qr-modal-title').innerText = "Scan QR Code ya Kifaa";
+                document.getElementById('qr-scan-view').classList.remove('hidden');
+                document.getElementById('qr-gen-view').classList.add('hidden');
+                
+                html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+                html5QrcodeScanner.render((decodedText) => {
+                    document.getElementById('qr-scan-result').classList.remove('hidden');
+                    document.getElementById('qr-history-text').innerText = decodedText;
+                    html5QrcodeScanner.clear();
+                });
+            } else {
+                document.getElementById('qr-modal-title').innerText = "Tengeneza QR ya Kifaa";
+                document.getElementById('qr-scan-view').classList.add('hidden');
+                document.getElementById('qr-gen-view').classList.remove('hidden');
+            }
+        }
+
+        function generateEquipmentQR() {
+            const name = document.getElementById('qr-device-name').value;
+            const details = document.getElementById('qr-repair-details').value;
+            if(!name || !details) {
+                showToast("Jaza jina na maelezo ya kazi!", "⚠️");
+                return;
+            }
+            const payload = `Kifaa: ${name} | Ukarabati: ${details} | Fundi: Pro Master | Tarehe: ${new Date().toLocaleDateString()}`;
+            document.getElementById('qrcode-display').innerHTML = "";
+            new QRCode(document.getElementById("qrcode-display"), {
+                text: payload,
+                width: 128,
+                height: 128
+            });
+            showToast("QR Code imetengenezwa kikamilifu!", "✨");
+        }
+
+        function closeQRModal() {
+            if(html5QrcodeScanner) {
+                try { html5QrcodeScanner.clear(); } catch(e){}
+            }
+            document.getElementById('modal-qr').classList.add('hidden');
+        }
+
+        // ==========================================
+        // 5. ACADEMY & GAMES ENGINE (100 Technical Games)
+        // ==========================================
+        function openAcademyModal() { document.getElementById('modal-academy').classList.remove('hidden'); }
+        function closeAcademyModal() { document.getElementById('modal-academy').classList.add('hidden'); }
+
+        const gamesData = [
+            { id: 1, name: "1. Wiring Connect Challenge ⚡", desc: "Unganisha Waya Sahihi kwa Circuit:", q: "Chagua Waya Sahihi wa Live:", opt: ["Live (Mwekundu)", "Neutral (Bluu)"], correct: 0 },
+            { id: 2, name: "2. Resistor Color Code Quiz 🎨", desc: "Rangi: Brown - Black - Red (Kiwango gani?)", q: "Thamani ya Resistor:", opt: ["1k Ω (1000 Ω)", "500 Ω"], correct: 0 },
+            { id: 3, name: "3. Fault Diagnostic Simulator 🔍", desc: "TV ina sauti lakini haina picha. Shida ipo wapi?", q: "Baini tatizo:", opt: ["Backlight Inverter / LED Strip", "Speaker Short Circuit"], correct: 0 },
+            { id: 4, name: "4. Soldering Speed Run 🔴", desc: "Test ya Joto la Soldering Iron:", q: "Joto sahihi la kuyeyusha risasi (solder bar):", opt: ["350°C", "100°C"], correct: 0 },
+            { id: 5, name: "5. Solar Panel Angle Calculator ☀️", desc: "Angle gani ya Sola inaleta chaji 100% Tanzania?", q: "Chagua Angle Sahihi:", opt: ["45° kuelekea Kaskazini/Kusini", "90° Bapa Kabisa"], correct: 0 },
+            { id: 6, name: "6. Multimeter Continuity Test 📟", desc: "Unapopima Fuse na Multimeter ikalia 'Beep', inamaanisha nini?", q: "Tafsiri ya Beep sound:", opt: ["Fuse iko Salama (Good)", "Fuse imeblast (Blown)"], correct: 0 },
+            { id: 7, name: "7. Capacitor Polarity Checker ⚡", desc: "Upande gani wa Electrolytic Capacitor una alama ya Stripe (-)?", q: "Tambua Terminal:", opt: ["Negative Terminal (-)", "Positive Terminal (+)"], correct: 0 },
+            { id: 8, name: "8. Circuit Breaker Tripping Diagnostic 🔌", desc: "Breaker inatrip mara tu unapowasha Pasi. Sababu kuu?", q: "Baini Tatizo:", opt: ["Short circuit / Earth fault kwenye pasi", "Umeme ni mdogo sana"], correct: 0 },
+            { id: 9, name: "9. AC to DC Rectification Quiz 🔄", desc: "Component gani inabadilisha umeme wa AC kuwa DC?", q: "Chagua Diodes:", opt: ["Bridge Rectifier (Diode)", "Transformer"], correct: 0 },
+            { id: 10, name: "10. Inverter Battery Calculation 🔋", desc: "Betri ya 100Ah 12V ina jumla ya Watthours (Wh) ngapi?", q: "Piga hesabu:", opt: ["1200 Wh", "500 Wh"], correct: 0 },
+            { id: 11, name: "11. Water Pipe Pressure Test 🚰", desc: "Mabomba ya PPR yanahitaji shinikizo gani wakati wa kuunganisha?", q: "Kiwango cha Pressure:", opt: ["PPR Heat Socket Fusion", "Cold Glue Only"], correct: 0 },
+            { id: 12, name: "12. Motor Star-Delta Starter 🔄", desc: "Starter gani inatumika kupunguza Starting Current ya Motor kubwa?", q: "Chagua Starter:", opt: ["Star-Delta Starter", "Direct On-Line (DOL)"], correct: 0 },
+            { id: 13, name: "13. Transistor Base Pin Finder 🔲", desc: "Pin gani ya NPN Transistor inayopokea Signal ya kuwasha switch?", q: "Tambua Pin:", opt: ["Base Pin", "Collector Pin"], correct: 0 },
+            { id: 14, name: "14. Earth Leakage Relay Test 🌐", desc: "Kazi kuu ya RCCB / ELCB ni nini?", q: "Baini Kazi:", opt: ["Kukata umeme mteja akishika waya wa live", "Kuongeza spidi ya feni"], correct: 0 },
+            { id: 15, name: "15. Subwoofer Bass Repair 🔊", desc: "Subwoofer inatoa sauti ya 'Hum' kubwa bila mziki. Shida?", q: "Baini tatizo:", opt: ["Filter Capacitors zimevimba/haribika", "Spika imepasuka"], correct: 0 },
+            { id: 16, name: "16. Refrigerator Gas Leak Detection 🧊", desc: "Sababu ya Friji kuwaka moto lakini haifanyi baridi?", q: "Baini tatizo:", opt: ["Refrigerant Gas Leak (R600a/R134a)", "Door Light Bulb Burned"], correct: 0 },
+            { id: 17, name: "17. CCTV Camera BNC Connector 📹", desc: "Waya gani unatumika kusafirisha Video kwenye CCTV ya Analog?", q: "Chagua Waya:", opt: ["Coaxial RG59 Cable", "Cat6 Network Cable"], correct: 0 },
+            { id: 18, name: "18. House Wiring Wire Gauge 🧵", desc: "Waya wa ukubwa gani unashauriwa kwa Sockets za Nyumba?", q: "Chagua Waya:", opt: ["2.5 mm² Cable", "1.0 mm² Cable"], correct: 0 },
+            { id: 19, name: "19. Switchboard Two-Way Wiring 💡", desc: "Switch gani inatumika kuwashia taa moja maeneo mawili (Stairs)?", q: "Chagua Switch:", opt: ["2-Way Switch", "1-Way Single Pole Switch"], correct: 0 },
+            { id: 20, name: "20. Smartphone Battery Voltage 📱", desc: "Kiwango cha kawaida cha Voltage cha Betri ya Simu ni gani?", q: "Voltage Sahihi:", opt: ["3.7V - 4.2V DC", "12V DC"], correct: 0 },
+            { id: 21, name: "21. Generator ATS Automatic Transfer ⚡", desc: "Kazi ya ATS (Automatic Transfer Switch) ni nini?", q: "Lengo la ATS:", opt: ["Kuwasha jenereta umeme wa Tanesco ukikatika", "Kupima mafuta ya jenereta"], correct: 0 },
+            { id: 22, name: "22. SMD Soldering Heat Gun 💨", desc: "Joto gani la Hot Air Rework Station linatumiwa kunyofoa IC za Simu?", q: "Chagua Joto:", opt: ["300°C - 350°C", "600°C"], correct: 0 },
+            { id: 23, name: "23. Washing Machine Drain Pump 🧺", desc: "Mashine ya kufua haitoi maji machafu nje. Shida ipo wapi?", q: "Baini tatizo:", opt: ["Drain Pump Imeziba/Haribika", "Motor Capacitor imeblast"], correct: 0 },
+            { id: 24, name: "24. Transformer Step-Down Ratio 🔌", desc: "Kama Primary turns ni 1000 na Secondary ni 100, hii ni Transformer gani?", q: "Aina ya Transformer:", opt: ["Step-Down Transformer", "Step-Up Transformer"], correct: 0 },
+            { id: 25, name: "25. Electric Fence Energizer Voltage ⚡", desc: "Energizer ya Wavu wa Umeme wa Ulinzi inatoa Pulse ya Voltage gani?", q: "Kiwango cha High Voltage:", opt: ["8,000V - 10,000V (Low Current)", "220V AC Standard"], correct: 0 },
+            { id: 26, name: "26. Air Conditioner Gas Pressure Test ❄️", desc: "Kipimo cha gesi ya R410A kwenye AC iliyopo sokoni:", q: "Suction Pressure ya R410A inatakiwa isome ngapi?", opt: ["120 - 130 PSI", "30 - 40 PSI"], correct: 0 },
+            { id: 27, name: "27. Induction Cooker Repair 🍳", desc: "Jiko la Umeme (Induction) linatoa Error E0. Maana yake?", q: "Baini tatizo:", opt: ["Hakuna chombo / Sufuria isiyo ya chuma", "Feni imekwama"], correct: 0 },
+            { id: 28, name: "28. Water Pump Pressure Switch 🚰", desc: "Pump haijizima hata kama mabomba yamefungwa. Shida ipo wapi?", q: "Baini Tatizo:", opt: ["Pressure Switch imekwama / Haribika", "Impeller imevunjika"], correct: 0 },
+            { id: 29, name: "29. Microwave Oven High Voltage Diode ⚡", desc: "Microwave inawaka vizuri lakini haipashi chakula joto. Shida?", q: "Baini tatizo:", opt: ["Magnetron / HV Diode imekufa", "Door Lock Button"], correct: 0 },
+            { id: 30, name: "30. Ethernet RJ45 Crimping standard 🌐", desc: "Rangi ya kwanza katika Standard T568B ni gani?", q: "Chagua Waya wa Kwanza:", opt: ["White-Orange", "White-Green"], correct: 0 },
+            { id: 31, name: "31. Optical Fiber Fusion Splicing 🧵", desc: "Kipimo cha kupunguza Loss wakati wa kuunganisha Fiber Cable:", q: "Splicing loss nzuri inatakiwa iwe chini ya:", opt: ["0.02 dB", "5.0 dB"], correct: 0 },
+            { id: 32, name: "32. Smartphone Charging Port Troubleshooting 📱", desc: "Simu inaonyesha inachaji lakini asilimia haipandi (Fake Charging).", q: "Sababu kuu ni gani?", opt: ["Charge IC au USB Data/VBAT lines", "Screen Display Assembly"], correct: 0 },
+            { id: 33, name: "33. Car Alternator Diode Pack 🚗", desc: "Taa ya Betri kwenye gari inawaka wakati gari lipo On. Shida?", q: "Baini tatizo:", opt: ["Alternator haizalishi umeme (Diode/Regulator)", "Starter Motor Imeshika"], correct: 0 },
+            { id: 34, name: "34. UPS Battery Replacement Calculator 🔋", desc: "UPS inafanya kazi dakika 1 tu baada ya umeme kukatika. Shida?", q: "Baini Tatizo:", opt: ["Internal Lead-Acid Battery imechoka", "Transformer Primary Short"], correct: 0 },
+            { id: 35, name: "35. AVR Voltage Stabilizer Relay Test ⚡", desc: "Stabilizer inatoa Output ya High Voltage zaidi ya 260V.", q: "Baini Tatizo:", opt: ["Relay imeganda / Feedback Sensor", "Fuse Imekatika"], correct: 0 },
+            { id: 36, name: "36. Submersible Pump Capacitor Selection 🌊", desc: "Pampu ya Maji ya Ardhini inavuta Ampere kubwa na haizunguki.", q: "Hatua ya kwanza kupima:", opt: ["Start/Run Capacitor", "Bomba la Maji"], correct: 0 },
+            { id: 37, name: "37. Digital Multimeter Voltage Range 📟", desc: "Unapotaka kupima umeme wa Ukutani (220V), weka knob wapi?", q: "Chagua Option Sahihi:", opt: ["ACV 600V / 750V", "DCV 20V"], correct: 0 },
+            { id: 38, name: "38. Electric Kettle Auto-Off Bimetal ☕", desc: "Pasi au Birika halijizimi maji yanapotokota. Shida?", q: "Baini Tatizo:", opt: ["Bimetallic Thermostat Element", "Heating Element Waya"], correct: 0 },
+            { id: 39, name: "39. Ceiling Fan Capacitor Speed Test 🌀", desc: "Feni ya taa inazunguka kwa taratibu sana hata kwenye namba 5.", q: "Badilisha component gani?", opt: ["Fan Run Capacitor (2.5uF)", "Main Bearing Only"], correct: 0 },
+            { id: 40, name: "40. Audio Amplifier MOSFET Test 📻", desc: "Amplifier inatoa moshi na kukata fuse mara tu inapowashwa.", q: "Pima kifaa gani kwanza?", opt: ["Output Transistors / MOSFETs Short Circuit", "Volume Potentiometer"], correct: 0 },
+            { id: 41, name: "41. Solar Charge Controller PWM vs MPPT ☀️", desc: "Controller gani ina efficiency kubwa kwa mfumo mkubwa wa Sola?", q: "Chagua Controller:", opt: ["MPPT Controller", "PWM Controller"], correct: 0 },
+            { id: 42, name: "42. BLDC Motor Driver Troubleshooting 🚲", desc: "Pikipiki ya Umeme (E-bike) haitembei lakini Display inawaka.", q: "Baini Tatizo:", opt: ["Motor Controller / Throttle Hall Sensor", "Headlight Bulb"], correct: 0 },
+            { id: 43, name: "43. TV T-Con Board Logic Check 📺", desc: "TV ina picha yenye mistari ya wima na rangi iliyochafuka. Shida?", q: "Baini Board:", opt: ["T-CON Board / LVDS Cable", "Power Supply Board"], correct: 0 },
+            { id: 44, name: "44. Lithium-ion BMS Overdischarge 🔋", desc: "BMS kwenye Betri ya Lithiamu inakata Output ikiwa chini ya ngapi?", q: "Voltage Limit:", opt: ["2.5V kwa Cell", "3.7V kwa Cell"], correct: 0 },
+            { id: 45, name: "45. Ground Rod Resistance Measurement 🌍", desc: "Resistance ya Earth Rod nzuri nyumbani inatakiwa iwe chini ya ngapi?", q: "Chagua Resistance Sahihi:", opt: ["Chini ya 5 Ohms (5 Ω)", "Zaidi ya 100 Ohms"], correct: 0 },
+            { id: 46, name: "46. Stepper Motor Driver Microstepping 🤖", desc: "Stepper Motor inatetemeka badala ya kuzunguka vizuri. Shida?", q: "Baini tatizo:", opt: ["Wiring Phase A/B Wires Zimekosewa", "Motor Shaft Friction"], correct: 0 },
+            { id: 47, name: "47. Gas Generator Spark Plug Gap ⛽", desc: "Jenereta hauwaki hata ukivuta kamba mara nyingi. Kagua nini?", q: "Hatua ya kwanza:", opt: ["Spark Plug na Oil Level Sensor", "Exhaust Pipe"], correct: 0 },
+            { id: 48, name: "48. Oscilloscope Signal Waveform Test 📈", desc: "Chombo gani kinatumiwa kuona Sine Wave na Frequency za Umeme?", q: "Chagua Zana:", opt: ["Oscilloscope", "Voltmeter Analog"], correct: 0 },
+            { id: 49, name: "49. Pressure Cooker Safety Valve 🍲", desc: "Ndio gani salama Mvuke usipotoka kwenye Pressure Cooker?", q: "Hatua sahihi:", opt: ["Safisha Vent Tube & Safety Relief Valve", "Ongeza Moto Mwingi"], correct: 0 },
+            { id: 50, name: "50. Single Phase Motor Centrifugal Switch 🔄", desc: "Motor inasikika kama inaguruma (Humming) lakini haianzi kuzunguka.", q: "Check nini?", opt: ["Start Capacitor & Centrifugal Switch", "Fan Cover"], correct: 0 },
+            { id: 51, name: "51. Smart Meter Pre-payment Error ⚡", desc: "Luku inaonyesha Error 30 wakati wa kuingiza Token. Inamaanisha nini?", q: "Baini Tatizo:", opt: ["Mawasiliano kati ya CIU Keyboard na Meter", "Umeme Umekatika Nje"], correct: 0 },
+            { id: 52, name: "52. Car Starter Solenoid Click Sound 🚗", desc: "Gari inapigwa Susi lakini inatoa tu sauti ya 'Click' moja.", q: "Baini Tatizo:", opt: ["Starter Solenoid / Betri haina nguvu", "Spark Plug Wire"], correct: 0 },
+            { id: 53, name: "53. Variable Frequency Drive (VFD) Error ⚙️", desc: "VFD kwenye Kiwanda inatoa Error ya Overvoltage (OV). Cause?", q: "Sababu kuu:", opt: ["Deceleration Time ni fupi sana", "Motor Speed ni ndogo"], correct: 0 },
+            { id: 54, name: "54. Welding Machine Inverter IGBT Diagnostic 👨‍🏭", desc: "Machine ya kuunganisha chuma haina Arc inapogusishwa.", q: "Pima Component gani?", opt: ["IGBT Transistors & Output Rectifier Diodes", "Earth Clamp Rubber"], correct: 0 },
+            { id: 55, name: "55. CCTV POE Switch Power Limit 📹", desc: "Camera ya POE inajizima na kuwaka usiku wakati IR LED zikiongezeka.", q: "Baini Tatizo:", opt: ["POE Switch Budget Watts hazitoshi", "BNC Connector Bad"], correct: 0 },
+            { id: 56, name: "56. Automatic Door Motion Sensor 🚪", desc: "Mlango wa Glass haufunguki Mtu akikaribia. Rekebisha?", q: "Baini Sensor:", opt: ["PIR / Microwave Radar Sensor Sensitivity", "Door Hinge Oil"], correct: 0 },
+            { id: 57, name: "57. Bluetooth Speaker Audio Distortion 📻", desc: "Spika inatoa sauti ya kukwaruza (Distortion) sauti ikiwa juu.", q: "Sababu Kuu:", opt: ["Cone / Surround ya Spika imepasuka", "Bluetooth Antenna Short"], correct: 0 },
+            { id: 58, name: "58. Water Heater Thermostat Safety Cutout 🚿", desc: "Heater ya maji bafuni haipashi maji moto kabisa.", q: "Baini Kitufe:", opt: ["Thermal Cutout Reset Button", "Water Inlet Valve"], correct: 0 },
+            { id: 59, name: "59. Drone Brushless ESC Calibration 🚁", desc: "Motor moja ya Drone haizunguki kwa kasi sawa na zingine.", q: "Tiba yake:", opt: ["Calibrate ESC Throttle Range", "Change Propeller Colour"], correct: 0 },
+            { id: 60, name: "60. Laptop Motherboard Short Circuit Finder 💻", desc: "Laptop haina Power Light kabisa baada ya kuwekwa Chaja.", q: "Pima wapi kwanza?", opt: ["Main 19V MOSFET/Capacitor Short to Ground", "Keyboard Flex"], correct: 0 },
+            { id: 61, name: "61. Car Fuel Pump Relay 🚗", desc: "Gari inapiga Starters vizuri lakini hauwaki (Fuel Pressure 0).", q: "Kagua kifaa gani?", opt: ["Fuel Pump Relay / Fuse", "Radiator Cap"], correct: 0 },
+            { id: 62, name: "62. Solar Inverter Pure Sine Wave Check ☀️", desc: "Inverter gani inafaa kuendesha Friji na Feni bila kupiga kelele?", q: "Chagua Inverter:", opt: ["Pure Sine Wave Inverter", "Modified Sine Wave Inverter"], correct: 0 },
+            { id: 63, name: "63. CNC Machine Endstop Limit Switch 🤖", desc: "Machine ya CNC inaendelea kugonga pembeni bila kusimama.", q: "Kagua nini?", opt: ["Limit Switch Wire / Homing Sensor", "Spindle Speed"], correct: 0 },
+            { id: 64, name: "64. Elevator Door Safety Light Curtain 🛗", desc: "Elevator haifungi milango na inatoa beeper indicator.", q: "Check nini?", opt: ["Infrared Safety Light Curtain obstruction", "Floor Button Switch"], correct: 0 },
+            { id: 65, name: "65. Car Headlight Relay Kit Upgrade 🚘", desc: "Taa za Gari ziko dhaifu sana usiku. Upgrade gani inashauriwa?", q: "Suluhisho:", opt: ["Weka Relay Harness Direct to Battery", "Badilisha Taa ya Rangi"], correct: 0 },
+            { id: 66, name: "66. Smoke Detector Alarm Maintenance 🚨", desc: "Smoke Detector inapiga Beep moja kila baada ya sekunde 30.", q: "Tafsiri yake:", opt: ["Betri ya Akiba ipo Low (Replace Battery)", "Kuna Moshi Mwingi"], correct: 0 },
+            { id: 67, name: "67. Refrigerator Compressor PTC Relay 🧊", desc: "Compressor ya Friji inafanya 'Click' halafu inajizima baada ya sekunde 3.", q: "Badilisha nini?", opt: ["PTC Starter Relay & Overload Protector", "Thermostat Knob"], correct: 0 },
+            { id: 68, name: "68. Transformer Oil Dielectric Test ⚡", desc: "Mafuta ya Transformer ya umeme mkubwa yanajaribiwa kwa ajili ya nini?", q: "Lengo kuu:", opt: ["Kupima Insulation Breakdown Voltage", "Kupima Rangi ya Mafuta"], correct: 0 },
+            { id: 69, name: "69. Fiber Optic Cable Bending Loss 🧵", desc: "Nini kinatokea ukikunja Waya wa Fiber bend kubwa sana?", q: "Matokeo:", opt: ["Signal Light Loss (Attenuation)", "Wire Short Circuit"], correct: 0 },
+            { id: 70, name: "70. Smartphone Screen Digitizer Ghost Touch 📱", desc: "Screen ya Simu inajibofya yenyewe (Ghost Touch). Cause?", q: "Sababu Kuu:", opt: ["Chaja mbovu / Static Damage on Touch IC", "Internal Memory Full"], correct: 0 },
+            { id: 71, name: "71. Three-Phase Motor Phase Reversal 🔄", desc: "Motor ya Awamu 3 inazunguka kinyume na uelekeo unaotakiwa.", q: "Je unarekebisha vipi?", opt: ["Badilisha nafasi za Waya 2 za Phase yoyote", "Ongeza Neutral Wire"], correct: 0 },
+            { id: 72, name: "72. Hydraulic Jack Pressure Seal 🚜", desc: "Jeki ya Gari inashuka yenyewe taratibu ikibeba mzigo.", q: "Tiba yake:", opt: ["Badilisha O-Ring Rubber Seals & Hydraulic Oil", "Rangi ya Jeki"], correct: 0 },
+            { id: 73, name: "73. LED Driver Current Limiting 💡", desc: "Taa za LED zinalipuka zikiwekwa direct kwenye 220V. Nini kinakosekana?", q: "Component Sahihi:", opt: ["Constant Current LED Driver", "Step-Up Transformer"], correct: 0 },
+            { id: 74, name: "74. Car OBD2 Scanner Trouble Code 🚘", desc: "Kifaa gani kinatumika kusoma makosa ya injini ya gari (Check Engine)?", q: "Chagua Zana:", opt: ["OBD2 Diagnostic Scanner", "Multimeter Analog"], correct: 0 },
+            { id: 75, name: "75. Walkie Talkie Frequency Matching 📻", desc: "Redio mbili za mawasiliano hazisikilizani. Rekebisha nini?", q: "Kigezo kikuu:", opt: ["Frequency Channel & CTCSS Sub-tone", "Battery Size"], correct: 0 },
+            { id: 76, name: "76. Solar Battery Equalization Charge 🔋", desc: "Mchakato wa Equalization Charge kwenye Betri za Flooded unasaidia nini?", q: "Faida kuu:", opt: ["Kuharibu Sulphation kwenye Plate", "Kuongeza Maji ya Betri"], correct: 0 },
+            { id: 77, name: "77. Projector Color Wheel Noise 📹", desc: "Projector inatoa sauti ya mlio mkali na picha haina rangi nzuri.", q: "Check nini?", opt: ["DLP Color Wheel Assembly", "HDMI Cable"], correct: 0 },
+            { id: 78, name: "78. Diesel Generator Governor Adjustment ⛽", desc: "Jenereta la Dizeli linapanda na kushuka spidi (Hunting).", q: "Rekebisha nini?", opt: ["Fuel Governor Speed Spring / Injector", "Air Filter Box"], correct: 0 },
+            { id: 79, name: "79. Ultrasonic Cleaner Transducer 🔬", desc: "Machine ya kusafishia Vifaa kwa Ultrasound haitengenezi vibration.", q: "Check Component:", opt: ["Piezoelectric Ceramic Transducer", "Power Cable Switch"], correct: 0 },
+            { id: 80, name: "80. TV Mainboard Firmware Flash 📺", desc: "Smart TV imekwama kwenye Logo wakati wa kuwaka (Bootloop).", q: "Tiba ya Software:", opt: ["Flash USB Firmware / Reball eMMC", "Replace Power Board"], correct: 0 },
+            { id: 81, name: "81. Electric Lawnmower Blade Balance 🌾", desc: "Mashine ya kukata nyasi inatenda vibration kubwa sana.", q: "Sababu Kuu:", opt: ["Kisu cha Kukatia hakipo Balanced / Kimepinda", "Sura ya Mashine"], correct: 0 },
+            { id: 82, name: "82. Biometric Fingerprint Sensor Cleaning 🔒", desc: "Machine ya Mahudhurio haisomi vidole vya watu vyema.", q: "Safisha na nini?", opt: ["Isopropyl Alcohol (IPA) & Soft Cloth", "Maji na Sabuni"], correct: 0 },
+            { id: 83, name: "83. Subwoofer Audio Crossover Filter 🔊", desc: "Spika ya Bass inatoa sauti za Mwimbaji badala ya Bass pekee.", q: "Kitu gani kinakosekana?", opt: ["Low Pass Crossover Filter", "High Treble Capacitor"], correct: 0 },
+            { id: 84, name: "84. Gas Leak Detector Calibration 🛑", desc: "Sensor ya Gesi jikoni inatoa Alarm bila gesi kuwepo.", q: "Baini Tatizo:", opt: ["Calibrate Zero Point Potentiometer / Sensor Limit", "Kipimo cha Betri"], correct: 0 },
+            { id: 85, name: "85. Lithium Battery Spot Welder ⚡", desc: "Teknolojia gani salama kuunganisha Cell za betri za 18650?", q: "Chagua Tool:", opt: ["Pulse Spot Welder", "Soldering Iron ya Kawaida"], correct: 0 },
+            { id: 86, name: "86. Automated Water Tank Level Controller 🚰", desc: "Tangi la maji linamwagika bila pump kujizima.", q: "Kagua Sensor ipi?", opt: ["Float Switch Sensor / Liquid Level Relays", "Water Meter Switch"], correct: 0 },
+            { id: 87, name: "87. Electric Vehicle J1772 Charger Cable 🔌", desc: "Chaja ya Gari la Umeme haianzi kutoa umeme ikiwekwa kwenye gari.", q: "Baini Pin Signal:", opt: ["Control Pilot (CP) / Proximity Pilot (PP)", "Neutral Wire Only"], correct: 0 },
+            { id: 88, name: "88. Laptop CPU Thermal Paste Replacement 💻", desc: "Laptop inajizima yenyewe baada ya dakika 5 za mchezo au kazi nzito.", q: "Tiba ya Kwanza:", opt: ["Badilisha Thermal Paste & Safisha Feni", "Badilisha RAM"], correct: 0 },
+            { id: 89, name: "89. Pressure Washer Unloader Valve 🧼", desc: "Mashine ya kuoshea magari (Pressure washer) haina pressure kali.", q: "Check Valve gani?", opt: ["Unloader Valve / Water Filter clogging", "Pressure Gauge"], correct: 0 },
+            { id: 90, name: "90. Car ABS Wheel Speed Sensor 🚗", desc: "Taa ya ABS kwenye Dashibodi inawaka baada ya kutembea kidogo.", q: "Pima kifaa gani?", opt: ["Wheel Speed Magnetic Sensor", "Brake Fluid Level Switch"], correct: 0 },
+            { id: 91, name: "91. Servo Motor Encoder Feedback 🤖", desc: "Servo Motor kwenye Mashine ya Viwanda inakimbia bila mpangilio.", q: "Baini Tatizo:", opt: ["Optical Encoder Feedback Cable Damage", "Motor Casing Mount"], correct: 0 },
+            { id: 92, name: "92. Solar Microinverter System ☀️", desc: "Faida ya Microinverter ukilinganisha na String Inverter:", q: "Faida Kuu:", opt: ["Kila Panel inafanya kazi independent ikipata kivuli", "Haitumii Betri"], correct: 0 },
+            { id: 93, name: "93. Refrigerator Defrost Heater Timer 🧊", desc: "Friji la No-Frost linagandisha barafu nyingi sehemu ya upepo wa baridi.", q: "Baini Component:", opt: ["Defrost Timer & Defrost Heater Element", "Door Gasket Rubber"], correct: 0 },
+            { id: 94, name: "94. Industrial Chiller Water Flow Switch ❄️", desc: "Chiller ya Viwanda inasitisha kazi ikionyesha Flow Error.", q: "Baini Tatizo:", opt: ["Water Pump Circulation / Flow Switch Failure", "Refrigerant Pressure"], correct: 0 },
+            { id: 95, name: "95. Microwave Door Safety Interlock Switches 🍲", desc: "Fuse ya Microwave inalipuka mara tu unapofungua mlango.", q: "Baini Tatizo:", opt: ["Door Interlock Microswitches Mismatch", "Turntable Motor Short"], correct: 0 },
+            { id: 96, name: "96. CCTV DVR Hard Drive SMART Error 📹", desc: "DVR haihifadhi Video na inapiga mlio wa Alarm endelevu.", q: "Check Kifaa gani?", opt: ["SATA Hard Disk Fault / Bad Sectors", "Camera BNC Cable"], correct: 0 },
+            { id: 97, name: "97. Automatic Voltage Regulator Carbon Brush ⚡", desc: "AVR kubwa ya Servo Motor inatoa cheche za moto ndani.", q: "Check Component:", opt: ["Variac Transformer Carbon Brush Wear", "Main Fuse Glass"], correct: 0 },
+            { id: 98, name: "98. Car ECU Power Relay Diagnostics 🚘", desc: "Engine ECU haisomani kwenye Diagnostic Scanner na gari hauwaki.", q: "Hatua ya kwanza:", opt: ["Kagua ECU Main Relay na Ground Wiring", "Badilisha Alternator"], correct: 0 },
+            { id: 99, name: "99. Smartphone Battery Calibration Test 📱", desc: "Simu inaruka kutoka 40% hadi 1% ghafla na kujizima.", q: "Tiba ya Kwanza:", opt: ["Badilisha Betri / Calibrate Fuel Gauge IC", "Reset Phone Firmware"], correct: 0 },
+            { id: 100, name: "100. Master Pro Final Certification Test 🏆", desc: "Mchezo wa Mwisho: Fundi Master Pro, Mfumo sahihi wa Kazi:", q: "Kipimo cha mwisho cha usalama wa kiufundi:", opt: ["Kagua vigezo vya Usalama (PPE), Zima Umeme kabla ya kazi", "Anza kufanya kazi bila kuzima switch kuu"], correct: 0 }
+        ];
+
+        function renderGamesList() {
+            const container = document.getElementById('games-list-container');
+            if(!container) return;
+            container.innerHTML = gamesData.map(g => `
+                <button onclick="loadGame(${g.id})" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 p-3 rounded-xl text-left text-xs font-bold flex justify-between items-center transition">
+                    <span>${g.name}</span>
+                    <span class="text-blue-400">Kucheza ➔</span>
+                </button>
+            `).join('');
+        }
+
+        function loadGame(id) {
+            const gameWin = document.getElementById('game-window');
+            if(!gameWin) return;
+            const g = gamesData.find(item => item.id === id) || gamesData[0];
+
+            gameWin.innerHTML = `
+                <div class="w-full space-y-3">
+                    <p class="text-xs font-bold text-blue-400">${g.name}</p>
+                    <p class="text-[11px] text-slate-300">${g.desc}</p>
+                    <p class="text-[11px] font-semibold text-amber-300">${g.q}</p>
+                    <div class="grid grid-cols-1 gap-2">
+                        <button onclick="checkGameAnswer(${g.id}, 0)" class="w-full bg-slate-900 hover:bg-slate-700 p-2 rounded-lg text-xs font-bold text-left border border-slate-700">A. ${g.opt[0]}</button>
+                        <button onclick="checkGameAnswer(${g.id}, 1)" class="w-full bg-slate-900 hover:bg-slate-700 p-2 rounded-lg text-xs font-bold text-left border border-slate-700">B. ${g.opt[1]}</button>
+                    </div>
+                    <p id="game-res-${g.id}" class="text-[11px] text-slate-400">Chagua jibu sahihi kuanza...</p>
+                </div>
+            `;
+        }
+
+        function checkGameAnswer(gameId, selectedOpt) {
+            const g = gamesData.find(item => item.id === gameId);
+            const res = document.getElementById(`game-res-${gameId}`);
+            if(!res) return;
+            if (selectedOpt === g.correct) {
+                res.innerHTML = `<span class="text-emerald-400 font-bold">✓ Hongera! Jibu ni Sahihi (+100 Points) 🎯</span>`;
+                showToast("Umepata Points +100 kwenye Mchezo!", "🎮");
+            } else {
+                res.innerHTML = `<span class="text-red-400 font-bold">✕ Siyo Sahihi. Jaribu tena kuteua jibu lingine!</span>`;
+            }
+        }
+
+        // ==========================================
+        // 6. UI UTILITIES (Toasts & Navigation)
+        // ==========================================
+        function showToast(message, icon = '💡') {
+            const toast = document.getElementById('toast');
+            if(!toast) return;
+            document.getElementById('toast-message').innerText = message;
+            document.getElementById('toast-icon').innerText = icon;
+            toast.classList.remove('opacity-0', 'pointer-events-none', '-translate-y-5');
+            toast.classList.add('opacity-100', 'translate-y-0');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'pointer-events-none', '-translate-y-5');
+                toast.classList.remove('opacity-100', 'translate-y-0');
+            }, 3000);
+        }
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('page-active'));
+            const targetPage = document.getElementById('page-' + pageId);
+            if(targetPage) targetPage.classList.add('page-active');
+            
+            ['home', 'chat', 'feed', 'games'].forEach(n => {
+                const b = document.getElementById('nav-' + n);
+                if(b) {
+                    if (n === pageId) {
+                        b.classList.add('text-blue-400');
+                        b.classList.remove('text-slate-400');
+                    } else {
+                        b.classList.remove('text-blue-400');
+                        b.classList.add('text-slate-400');
+                    }
+                }
+            });
+        }
+
+        // ==========================================
+        // 7. WEBRTC CALLING ENGINE
+        // ==========================================
+        function callDirectNumber(remotePhone, isVideo) {
+            navigator.mediaDevices.getUserMedia({ video: isVideo, audio: true })
+                .then(stream => {
+                    localStream = stream;
+                    document.getElementById('local-video').srcObject = stream;
+                    document.getElementById('call-screen').classList.remove('hidden');
+                    document.getElementById('call-status').innerText = isVideo ? "Inapiga Video Call..." : "Inapiga Simu ya Sauti...";
+                    document.getElementById('remote-peer-id').innerText = "Namba: " + remotePhone;
+
+                    if(peer) {
+                        const call = peer.call(remotePhone, stream);
+                        call.on('stream', remoteStream => {
+                            document.getElementById('call-status').innerText = "Mawasiliano Yapo Live";
+                            document.getElementById('remote-video').srcObject = remoteStream;
+                        });
+                        currentCall = call;
+                    }
+                })
+                .catch(err => showToast("Ruhusu Kamera na Mic kwenye browser!", "⚠️"));
+        }
+
+        function endCall() {
+            if (currentCall) currentCall.close();
+            if (localStream) localStream.getTracks().forEach(track => track.stop());
+            document.getElementById('call-screen').classList.add('hidden');
+            showToast("Simu Imekatika", "📞");
+        }
+
+        function toggleAudio() {
+            if (localStream) {
+                const audioTrack = localStream.getAudioTracks()[0];
+                audioTrack.enabled = !audioTrack.enabled;
+                document.getElementById('btn-mute').innerText = audioTrack.enabled ? "🎙️" : "🔇";
+            }
+        }
+
+        function toggleVideo() {
+            if (localStream) {
+                const videoTrack = localStream.getVideoTracks()[0];
+                if (videoTrack) {
+                    videoTrack.enabled = !videoTrack.enabled;
+                    document.getElementById('btn-camera').innerText = videoTrack.enabled ? "📹" : "📷";
+                }
+            }
+        }
+
+        // ==========================================
+        // 8. POSTS & SUPABASE DATA MANAGEMENT
+        // ==========================================
+        function previewSelectedFile(event) {
+            selectedFile = event.target.files[0];
+            const previewBox = document.getElementById('file-preview');
+            if (selectedFile) {
+                previewBox.innerText = `📎 Faili lililochaguliwa: ${selectedFile.name}`;
+                previewBox.classList.remove('hidden');
+            }
+        }
+
+        async function submitPost() {
+            const textInput = document.getElementById('post-text').value.trim();
+            if (!textInput && !selectedFile) {
+                showToast("Andika maelezo au chagua picha/video kabla ya kusukuma!", "⚠️");
+                return;
+            }
+
+            const postsContainer = document.getElementById('posts-container');
+            let mediaHTML = '';
+            let mediaUrl = '';
+
+            if (selectedFile) {
+                const url = URL.createObjectURL(selectedFile);
+                const isVideo = selectedFile.type.startsWith('video');
+                mediaHTML = isVideo 
+                    ? `<video src="${url}" controls class="w-full rounded-lg max-h-52 object-cover"></video>`
+                    : `<img src="${url}" class="w-full rounded-lg max-h-52 object-cover" />`;
+                mediaUrl = url;
+            }
+
+            const newPost = document.createElement('div');
+            newPost.className = "bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3";
+            newPost.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center font-bold text-xs">M</div>
+                    <div>
+                        <p class="font-bold text-xs">Mimi (Master Pro)</p>
+                        <p class="text-[10px] text-slate-400">Sasa Hivi</p>
+                    </div>
+                </div>
+                ${textInput ? `<p class="text-xs text-slate-300">${textInput}</p>` : ''}
+                ${mediaHTML}
+            `;
+
+            if(postsContainer) postsContainer.prepend(newPost);
+
+            try {
+                const { data: { user } } = await supabaseClient.auth.getUser();
+                await supabaseClient.from('fundi_posts').insert([{
+                    content: textInput,
+                    media_url: mediaUrl,
+                    author: user ? user.email : 'Master Pro',
+                    user_id: user ? user.id : null,
+                    created_at: new Date().toISOString()
+                }]);
+            } catch (e) {
+                console.error("Supabase post save error:", e);
+            }
+
+            document.getElementById('post-text').value = '';
+            const postInputEl = document.getElementById('post-input');
+            if(postInputEl) postInputEl.value = '';
+            document.getElementById('file-preview').classList.add('hidden');
+            selectedFile = null;
+
+            showToast("Post yako imesukumwa na kupakizwa kwenye Supabase!", "🚀");
+        }
+
+        // ==========================================
+        // 9. SUPABASE LIVE DATA LOADERS
+        // ==========================================
+        async function loadHomeDynamicAd() {
+            try {
+                let { data, error } = await supabaseClient
+                    .from('global_ads')
+                    .select('*')
+                    .limit(1);
+
+                if (!error && data && data.length > 0) {
+                    const ad = data[0];
+                    const titleEl = document.getElementById('home-ad-title');
+                    const descEl = document.getElementById('home-ad-desc');
+                    if(titleEl) titleEl.innerText = ad.title || ad.business_name || 'Tangazo la Supabase';
+                    if(descEl) descEl.innerText = ad.description || 'Pata huduma bora kupitia mfumo wetu';
+                }
+            } catch (err) {
+                console.error("Hitilafu ya kupakia tangazo:", err);
+            }
+        }
+
+        async function loadProximityJobs() {
+            try {
+                const container = document.getElementById('radar-jobs-list');
+                if(!container) return;
+                
+                container.innerHTML = `<div class="bg-slate-900 border border-slate-700 p-2.5 rounded-xl text-xs text-center text-slate-400">Inatafuta kazi...</div>`;
+
+                let { data: jobs, error } = await supabaseClient
+                    .from('repair_jobs')
+                    .select('*')
+                    .eq('status', 'pending')
+                    .limit(5);
+
+                if (error) throw error;
+
+                if (!jobs || jobs.length === 0) {
+                    container.innerHTML = `<div class="bg-slate-900 border border-slate-700 p-2.5 rounded-xl text-xs text-center text-slate-400">Hakuna kazi za dharura kwa sasa karibu nawe.</div>`;
+                    return;
+                }
+
+                container.innerHTML = '';
+                jobs.forEach(job => {
+                    const jobCard = document.createElement('div');
+                    jobCard.className = "bg-slate-900 border border-slate-700 p-2.5 rounded-xl flex items-center justify-between text-xs";
+                    jobCard.innerHTML = `
+                        <div>
+                            <p class="font-bold text-emerald-300">${job.description || 'Kazi ya Ukarabati'}</p>
+                            <p class="text-[10px] text-slate-400">${job.location || 'Eneo la karibu'} • Umbali wa karibu</p>
+                        </div>
+                        <button onclick="acceptJob('${job.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-[10px] font-bold px-2 py-1 rounded-lg text-white">Chukua Kazi</button>
+                    `;
+                    container.appendChild(jobCard);
+                });
+            } catch (err) {
+                console.error("Hitilafu ya kupakia kazi za radar:", err.message);
+            }
+        }
+
+        async function acceptJob(jobId) {
+            try {
+                const { data: { user } } = await supabaseClient.auth.getUser();
+                if (!user) {
+                    showToast("Tafadhali ingia kwenye mfumo kwanza!", "⚠️");
+                    return;
+                }
+
+                const { error } = await supabaseClient
+                    .from('repair_jobs')
+                    .update({ status: 'accepted', technician_id: user.id })
+                    .eq('id', jobId);
+
+                if (error) throw error;
+                showToast("Umekubali kazi! Mteja anaarifiwa...", "✅");
+                loadProximityJobs();
+            } catch (err) {
+                console.error("Hitilafu:", err);
+                showToast("Imeshindwa kuchukua kazi hii", "❌");
+            }
+        }
+
+        async function loadTechniciansForChat() {
+            try {
+                const container = document.getElementById('wasiliano-mafundi-container');
+                if(!container) return;
+
+                let { data: techData, error } = await supabaseClient
+                    .from('technicians')
+                    .select('*');
+
+                if (error) throw error;
+
+                if (!techData || techData.length === 0) {
+                    container.innerHTML = `<div class="bg-slate-800 border border-slate-700 p-3 rounded-xl text-center text-xs text-slate-400">Hakuna mafundi waliosajiliwa kwa sasa.</div>`;
+                    return;
+                }
+
+                container.innerHTML = '';
+                techData.forEach(tech => {
+                    const techCard = document.createElement('div');
+                    techCard.className = "bg-slate-800 border border-slate-700 p-3 rounded-xl flex items-center justify-between";
+                    techCard.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center font-bold text-white text-sm">
+                                ${(tech.jina || 'F').charAt(0)}
+                            </div>
+                            <div>
+                                <p class="font-bold text-sm text-slate-100">${tech.jina || 'Fundi'}</p>
+                                <p class="text-[11px] text-emerald-400">${tech.simu || '0700000000'} • Online</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="callDirectNumber('${tech.simu}', false)" class="p-2 bg-slate-700 hover:bg-slate-600 rounded-full text-xs text-blue-400">📞</button>
+                            <button onclick="callDirectNumber('${tech.simu}', true)" class="p-2 bg-blue-600 hover:bg-blue-500 rounded-full text-xs text-white">📹</button>
+                        </div>
+                    `;
+                    container.appendChild(techCard);
+                });
+            } catch (err) {
+                console.error("Hitilafu ya kupakia mafundi:", err.message);
+            }
+        }
+
+        function confirmReturnToRoomOne() {
+            showToast("Arifa imethibitishwa: Fundi yupo njiani kwenda Chumba No. 1!", "🏃‍♂️");
+        }
+
+        function openSOSModal() {
+            const modal = document.getElementById('modal-sos');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeSOSModal() {
+            const modal = document.getElementById('modal-sos');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function openInvoiceModal() { document.getElementById('modal-invoice').classList.remove('hidden'); }
+        function closeInvoiceModal() { document.getElementById('modal-invoice').classList.add('hidden'); }
+        function generateInvoice() {
+            showToast("Invoice imetengenezwa kikamilifu!", "📄");
+            closeInvoiceModal();
+        }
+
+        // Initialize Everything on DOM Load
+        document.addEventListener('DOMContentLoaded', () => {
+            renderGamesList();
+            loadHomeDynamicAd();
+            loadProximityJobs();
+            loadTechniciansForChat();
+        });
+    </script>
+
+    <!-- Moduli za Ziada (Script Paths) -->
+    <script src="js/supabase.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/profile.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/admin.js"></script>
+
+</body>
+</html>

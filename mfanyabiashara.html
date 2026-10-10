@@ -567,7 +567,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!supabaseClient) return;
             try {
                 const { data } = await supabaseClient
-                    .from('chats')
+                    .from('merchant_chats')
                     .select('*')
                     .eq('merchant_id', merchantData.id);
                 
@@ -644,24 +644,21 @@ document.addEventListener("DOMContentLoaded", () => {
             setTimeout(() => { toast.classList.add('hidden'); }, duration);
         }
 
-        function fanyaLoginMfanyabiashara() {
-            const jinaDuka = document.getElementById('loginJina').value.trim();
-            const locationDuka = document.getElementById('loginLocation').value.trim();
-            
-            if (!jinaDuka) {
-                showToast("⚠️ Tafadhali ingiza Jina la Duka!");
-                return;
-            }
-
-            merchantData = {
-                id: "MERCH-" + Date.now(),
-                name: jinaDuka,
-                location: locationDuka || "Kariakoo"
-            };
-
-            localStorage.setItem('byao_merchant_session', JSON.stringify(merchantData));
-            renderMerchantDashboard(merchantData);
+        async function initMerchantAuth(){
+            try{
+                const { data: { user } } = await window.supabaseClient.auth.getUser();
+                if(!user){ showToast("⚠️ Ingia kwanza kupitia login"); setTimeout(()=>{ location.href='login.html'; },1200); return; }
+                const { data: prof } = await window.supabaseClient.from('profiles').select('full_name,role,location').eq('id', user.id).maybeSingle();
+                const role = ((prof && prof.role) || '').toLowerCase();
+                if(role !== 'merchant' && role !== 'admin' && role !== 'master_admin'){ showToast("⛔ Ukurasa huu ni wa wafanyabiashara tu"); setTimeout(()=>{ location.href='login.html'; },1500); return; }
+                const { data: m } = await window.supabaseClient.from('merchants').select('business_name').eq('profile_id', user.id).maybeSingle();
+                merchantData = { id: user.id, name: (m && m.business_name) || (prof && prof.full_name) || 'Duka', location: (prof && prof.location) || 'Tanzania' };
+                renderMerchantDashboard(merchantData);
+            }catch(e){ showToast("❌ Imeshindikana kuthibitisha akaunti"); }
         }
+
+        function fanyaLoginMfanyabiashara(){ initMerchantAuth(); }
+        window.addEventListener('load', initMerchantAuth);
 
         function renderMerchantDashboard(data) {
             const loginScreen = document.getElementById('loginScreen');
@@ -681,7 +678,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         function logoutMerchant() {
             localStorage.removeItem('byao_merchant_session');
-            window.location.reload();
+            window.supabaseClient.auth.signOut().finally(()=>{ location.href='login.html'; });
         }
 
         function switchTab(tabName) {
@@ -820,7 +817,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const swaliText = `Habari Admin, nimekuwekea tangazo langu hapa. Naomba kuhakikisha kama video/picha imefika vizuri ili niweze kulipia.`;
             
             try {
-                await supabaseClient.from('chats').insert([{
+                await supabaseClient.from('merchant_chats').insert([{
                     merchant_id: merchantData.id,
                     sender: merchantData.name,
                     text: swaliText,
@@ -834,7 +831,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             setTimeout(async () => {
                 try {
-                    await supabaseClient.from('chats').insert([{
+                    await supabaseClient.from('merchant_chats').insert([{
                         merchant_id: merchantData.id,
                         sender: "Admin Mkuu",
                         text: autoReplyText,
@@ -1022,7 +1019,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if(!txt) return;
 
             try {
-                await supabaseClient.from('chats').insert([{
+                await supabaseClient.from('merchant_chats').insert([{
                     merchant_id: merchantData.id,
                     sender: merchantData.name,
                     text: txt,
@@ -1041,7 +1038,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if(!txt) return;
 
             try {
-                await supabaseClient.from('chats').insert([{
+                await supabaseClient.from('merchant_chats').insert([{
                     merchant_id: merchantData.id,
                     sender: merchantData.name,
                     text: txt,
@@ -1207,3 +1204,4 @@ function hifadhiKidokezoBilaAlert() {
 
 </body>
 </html>
+

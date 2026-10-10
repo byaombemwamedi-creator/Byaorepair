@@ -582,7 +582,7 @@
         }
 
         async function fetchDevices() {
-            const { data, error } = await supabaseClient.from('devices').select('*');
+            const { data, error } = currentUserPhone ? await supabaseClient.rpc('track_device', { p_namba: currentUserPhone }) : { data: [], error: null };
             if (data && data.length > 0) {
                 dbSimu = data;
             } else {
@@ -594,7 +594,7 @@
         }
 
         async function fetchMerchantProducts() {
-            const { data, error } = await supabaseClient.from('merchant_products').select('*');
+            const { data, error } = await supabaseClient.from('products').select('*');
             if (data && data.length > 0) {
                 dbMerchantProducts = data;
             } else {
@@ -1070,6 +1070,8 @@ showToast("❌ Kosa: " + (error.message || error.details || "Imeshindikana"));
                 media_type: selectedFileType || null
             };
 
+            const { data: { user: authUser } } = await supabaseClient.auth.getUser();
+            if (!authUser) { showToast("⚠️ Ingia kwanza ili kutuma ujumbe"); setTimeout(() => { location.href = 'login.html'; }, 1200); return; }
             const { error } = await supabaseClient.from('client_chats').insert([payload]);
 
             if (error) {
@@ -1212,3 +1214,4 @@ showToast("❌ Kosa: " + (error.message || error.details || "Imeshindikana"));
 <script src="js/admin.js"></script>
 </body>
 </html>
+

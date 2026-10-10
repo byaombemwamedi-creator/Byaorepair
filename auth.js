@@ -121,13 +121,13 @@ if (!profile) {
         console.log("ROLE YA MTUMIAJI:", profile.role);
 
         // Angalia hali ya akaunti kwa uangalifu (Kama nguzo zipo kwenye DB)
-        const status = profile.account_status || profile.status;
-        if (status === "pending") {
+        const status = String(profile.account_status || profile.status || "").toLowerCase();
+        if (false && status === "pending") { // pending users may log in; admin can block/suspend
             await logoutUser();
             throw new Error("Account bado haijaidhinishwa na uongozi.");
         }
 
-        if (status === "suspended" || profile.is_active === false) {
+        if (status === "suspended" || status === "blocked" || profile.is_active === false) {
             await logoutUser();
             throw new Error("Account hii imefungwa au kusimamishwa.");
         }
@@ -216,3 +216,4 @@ window.getFromCache = getFromCache;
 window.forceSystemLogout = forceSystemLogout;
 
 console.log("AUTH V3 FUNCTIONS READY & EXPORTED");
+

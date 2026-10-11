@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="sw"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BYAO Mobile Solutions</title>
+<link rel="manifest" href="manifest.json"><meta name="theme-color" content="#0f172a">
+<link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
+<script src="byao-debug.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<style>html,body{height:100%;margin:0;background:#0b0f17;color:#e2e8f0;font-family:system-ui,sans-serif}.w{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}.l{width:72px;height:72px;border-radius:20px;background:linear-gradient(135deg,#2563eb,#10b981);display:flex;align-items:center;justify-content:center;font-size:38px;font-weight:800;color:#fff}.s{width:28px;height:28px;border:3px solid #334155;border-top-color:#10b981;border-radius:50%;animation:r 1s linear infinite}@keyframes r{to{transform:rotate(360deg)}}</style>
+</head><body><div class="w"><div class="l">B</div><div>BYAO Mobile Solutions</div><div class="s"></div></div>
+<script>
+// Entry point: sends the user to the right page (or to login). Works offline with the last known role.
+(function(){
+  var go=function(u){location.replace(u)}, done=false;
+  setTimeout(function(){ if(!done) go(localStorage.getItem('byao_last_route')||'login.html'); },7000);
+  (async function(){
+    try{
+      var r=await window.supabaseClient.auth.getSession(), s=r.data&&r.data.session;
+      if(!s){done=true;return go('login.html')}
+      var p=await window.supabaseClient.from('profiles').select('role').eq('id',s.user.id).maybeSingle();
+      var role=String((p.data&&p.data.role)||'').toLowerCase();
+      var map={admin:'admin.html',master_admin:'admin.html',assistant:'assistant.html',technician:'fundi.html',fundi:'fundi.html',merchant:'mfanyabiashara.html',client:'mteja.html'};
+      var dest=map[role]||localStorage.getItem('byao_last_route')||'mteja.html';
+      localStorage.setItem('byao_last_route',dest); done=true; go(dest);
+    }catch(e){ done=true; go(localStorage.getItem('byao_last_route')||'login.html'); }
+  })();
+})();
+if('serviceWorker' in navigator && /^https?:/.test(location.protocol)){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}
+</script></body></html>
